@@ -1,0 +1,188 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-arrow-u-up-left"></i> Return Medicines
+          </h4>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancel()">
+            <i class="ph-x"></i> Cancel
+          </button>
+        </div>
+
+        <div class="card-body">
+          <form [formGroup]="returnForm">
+            <!-- Search Dispensing -->
+            <div class="card mb-4 bg-light">
+              <div class="card-body">
+                <label class="form-label">Search Dispensing Record</label>
+                <input type="text" class="form-control" formControlName="searchTerm" 
+                       (input)="searchDispensing($any($event.target).value)"
+                       placeholder="Search by prescription number, patient name, or patient ID...">
+                <small class="text-muted">Enter at least 3 characters to search</small>
+              </div>
+            </div>
+
+            <!-- Dispensing Details -->
+            <div *ngIf="dispensing" class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Dispensing Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-2"><strong>Prescription No:</strong> {{ dispensing.prescriptionNumber }}</p>
+                    <p class="mb-2"><strong>Patient:</strong> {{ dispensing.patientName }}</p>
+                    <p class="mb-0"><strong>Dispensed Date:</strong> {{ dispensing.dispensedAt | date:'dd/MM/yyyy hh:mm a' }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-2"><strong>Dispensed By:</strong> {{ dispensing.dispensedBy }}</p>
+                    <p class="mb-2"><strong>Total Amount:</strong> ₹{{ dispensing.totalAmount.toFixed(2) }}</p>
+                    <p class="mb-0"><strong>Payment Status:</strong> {{ dispensing.paymentStatus }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Return Reason -->
+            <div *ngIf="dispensing" class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Return Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Return Reason <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="returnReason"
+                            [class.is-invalid]="returnForm.get('returnReason')?.invalid && returnForm.get('returnReason')?.touched">
+                      <option value="">Select reason...</option>
+                      <option *ngFor="let reason of returnReasons" [value]="reason">{{ reason }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6" *ngIf="returnForm.get('returnReason')?.value === 'Other'">
+                    <label class="form-label">Return Reason Details <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="returnReasonDetails"
+                           [class.is-invalid]="returnForm.get('returnReasonDetails')?.invalid && returnForm.get('returnReasonDetails')?.touched"
+                           placeholder="Please specify the reason">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Return Items -->
+            <div *ngIf="dispensing" class="card mb-4">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Medicines to Return</h5>
+                <span class="badge bg-primary">Returning: {{ getReturningCount() }} of {{ items.length }}</span>
+              </div>
+              <div class="card-body">
+                <div formArrayName="items">
+                  <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" 
+                       class="medicine-item mb-3 p-3 border rounded">
+                    <div class="row">
+                      <!-- Medicine Info -->
+                      <div class="col-md-12 mb-3">
+                        <h6 class="mb-1">{{ item.get('medicineName')?.value }}</h6>
+                        <small class="text-muted">Batch: {{ item.get('batchNumber')?.value }}</small>
+                      </div>
+
+                      <!-- Dispensed Quantity -->
+                      <div class="col-md-2">
+                        <label class="form-label">Dispensed Qty</label>
+                        <input type="number" class="form-control" formControlName="dispensedQuantity" readonly>
+                      </div>
+
+                      <!-- Return Quantity -->
+                      <div class="col-md-2">
+                        <label class="form-label">Return Qty <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" formControlName="returnQuantity" min="0"
+                               [max]="item.get('dispensedQuantity')?.value"
+                               [class.is-invalid]="item.get('returnQuantity')?.invalid && item.get('returnQuantity')?.touched">
+                      </div>
+
+                      <!-- Medicine Condition -->
+                      <div class="col-md-3">
+                        <label class="form-label">Condition <span class="text-danger">*</span></label>
+                        <select class="form-select" formControlName="condition">
+                          <option *ngFor="let condition of medicineConditions" [value]="condition">{{ condition }}</option>
+                        </select>
+                      </div>
+
+                      <!-- Restockable -->
+                      <div class="col-md-2">
+                        <label class="form-label">Restockable</label>
+                        <div class="form-check mt-2">
+                          <input class="form-check-input" type="checkbox" formControlName="restockable">
+                          <label class="form-check-label">
+                            {{ item.get('restockable')?.value ? 'Yes' : 'No' }}
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Refund Amount -->
+                      <div class="col-md-3">
+                        <label class="form-label">Refund Amount</label>
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input type="number" class="form-control" formControlName="refundAmount" readonly>
+                        </div>
+                      </div>
+
+                      <!-- Remarks -->
+                      <div class="col-md-12 mt-2">
+                        <label class="form-label small">Item Remarks</label>
+                        <input type="text" class="form-control form-control-sm" formControlName="remarks" 
+                               placeholder="Any notes about this return...">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- General Remarks -->
+            <div *ngIf="dispensing" class="card mb-4">
+              <div class="card-body">
+                <label class="form-label">General Remarks</label>
+                <textarea class="form-control" formControlName="remarks" rows="3" 
+                          placeholder="Any additional information about this return..."></textarea>
+              </div>
+            </div>
+
+            <!-- Summary -->
+            <div *ngIf="dispensing" class="alert alert-info">
+              <div class="row">
+                <div class="col-md-4">
+                  <strong>Total Items:</strong> {{ items.length }}
+                </div>
+                <div class="col-md-4">
+                  <strong>Returning:</strong> {{ getReturningCount() }}
+                </div>
+                <div class="col-md-4">
+                  <strong>Total Refund:</strong> ₹{{ getTotalRefundAmount().toFixed(2) }}
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card-footer" *ngIf="dispensing">
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+              <i class="ph-x"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-primary" 
+                    (click)="submitReturn()"
+                    [disabled]="isSubmitting || getReturningCount() === 0">
+              <i class="ph-check-circle"></i> 
+              {{ isSubmitting ? 'Submitting...' : 'Submit Return (Pending Approval)' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

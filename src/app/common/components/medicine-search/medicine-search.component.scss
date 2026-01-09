@@ -1,0 +1,64 @@
+.medicine-search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-input-group {
+  position: relative;
+}
+
+.search-loading {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1050;
+
+  .list-group-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+}
+
+.input-group-text {
+  background-color: #fff;
+  border-right: 0;
+}
+
+.form-control {
+  border-left: 0;
+
+  &:focus {
+    border-color: #ced4da;
+    box-shadow: none;
+  }
+}
+
+.table {
+  font-size: 0.875rem;
+
+  th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    padding: 0.75rem 0.5rem;
+  }
+
+  td {
+    padding: 0.5rem;
+    vertical-align: middle;
+  }
+}

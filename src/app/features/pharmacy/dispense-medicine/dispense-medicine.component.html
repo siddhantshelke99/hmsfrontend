@@ -1,0 +1,239 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-prescription-bottle"></i> Dispense Medicines
+          </h4>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancel()">
+            <i class="ph-x"></i> Cancel
+          </button>
+        </div>
+
+        <div class="card-body" *ngIf="prescription">
+          <!-- Prescription Details -->
+          <div class="card mb-4 bg-light">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h5 class="mb-3">Prescription Details</h5>
+                  <p class="mb-2"><strong>Prescription No:</strong> {{ prescription.prescriptionNumber }}</p>
+                  <p class="mb-2"><strong>Date:</strong> {{ prescription.visitDate | date:'dd/MM/yyyy hh:mm a' }}</p>
+                  <p class="mb-2"><strong>Doctor:</strong> {{ prescription.doctorName }} ({{ prescription.department }})</p>
+                  <p class="mb-0"><strong>Diagnosis:</strong> {{ prescription.diagnosis }}</p>
+                </div>
+                <div class="col-md-6">
+                  <h5 class="mb-3">Patient Information</h5>
+                  <p class="mb-2"><strong>Name:</strong> {{ prescription.patientName }}</p>
+                  <p class="mb-2"><strong>Registration No:</strong> {{ prescription.patientRegistrationNumber }}</p>
+                  <p class="mb-2"><strong>Age/Gender:</strong> {{ prescription.patientAge }} years / {{ prescription.patientGender }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dispensing Form -->
+          <form [formGroup]="dispensingForm">
+            <div class="card mb-4">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Medicines to Dispense</h5>
+                <div>
+                  <span class="badge bg-primary me-2">Total: {{ items.length }}</span>
+                  <span class="badge bg-success me-2">Dispensing: {{ getDispensedCount() }}</span>
+                  <span class="badge bg-danger" *ngIf="getOutOfStockCount() > 0">
+                    Out of Stock: {{ getOutOfStockCount() }}
+                  </span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div formArrayName="items">
+                  <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" 
+                       class="medicine-item mb-4 p-3 border rounded">
+                    <div class="row">
+                      <!-- Medicine Info -->
+                      <div class="col-md-12 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <div>
+                            <h6 class="mb-1">
+                              {{ item.get('medicineName')?.value }}
+                              <span class="text-muted" *ngIf="item.get('strength')?.value">
+                                ({{ item.get('strength')?.value }})
+                              </span>
+                              <span class="badge bg-secondary ms-2">{{ item.get('medicineType')?.value }}</span>
+                            </h6>
+                            <span class="text-success" *ngIf="item.get('substituted')?.value">
+                              <i class="ph-swap"></i> Substituted: {{ item.get('substituteMedicineName')?.value }}
+                            </span>
+                          </div>
+                          <div class="text-end">
+                            <span class="badge bg-info">
+                              Stock: {{ item.get('availableStock')?.value }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Prescribed Quantity -->
+                      <div class="col-md-2">
+                        <label class="form-label">Prescribed</label>
+                        <input type="number" class="form-control" formControlName="prescribedQuantity" readonly>
+                      </div>
+
+                      <!-- Dispense Quantity -->
+                      <div class="col-md-2">
+                        <label class="form-label">Dispense Qty <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" formControlName="dispensedQuantity" min="0"
+                               [class.is-invalid]="item.get('dispensedQuantity')?.invalid && item.get('dispensedQuantity')?.touched">
+                      </div>
+
+                      <!-- Batch Selection -->
+                      <div class="col-md-3">
+                        <label class="form-label">Select Batch <span class="text-danger">*</span></label>
+                        <select class="form-select" formControlName="selectedBatchId"
+                                [class.is-invalid]="item.get('selectedBatchId')?.invalid && item.get('selectedBatchId')?.touched"
+                                (change)="selectBatch(i, getBatchesForItem(i)[$any($event.target).selectedIndex - 1])">
+                          <option value="">Select batch...</option>
+                          <option *ngFor="let batch of getBatchesForItem(i)" [value]="batch.batchId">
+                            {{ batch.batchNumber }} - Exp: {{ batch.expiryDate | date:'MM/yyyy' }} - 
+                            Qty: {{ batch.availableQuantity }} - ₹{{ batch.unitPrice }}
+                          </option>
+                        </select>
+                      </div>
+
+                      <!-- Unit Price -->
+                      <div class="col-md-2">
+                        <label class="form-label">Unit Price</label>
+                        <input type="number" class="form-control" formControlName="unitPrice" readonly>
+                      </div>
+
+                      <!-- Total Price -->
+                      <div class="col-md-2">
+                        <label class="form-label">Total Price</label>
+                        <input type="number" class="form-control" formControlName="totalPrice" readonly>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="col-md-1 d-flex align-items-end">
+                        <div class="btn-group-vertical w-100" role="group">
+                          <button type="button" class="btn btn-outline-warning btn-sm" 
+                                  (click)="searchSubstitute(i)"
+                                  title="Find Substitute"
+                                  [disabled]="item.get('substituted')?.value">
+                            <i class="ph-swap"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-danger btn-sm" 
+                                  (click)="markOutOfStock(i)"
+                                  title="Mark Out of Stock">
+                            <i class="ph-x-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Remarks -->
+                      <div class="col-md-12 mt-2" *ngIf="item.get('substituted')?.value">
+                        <div class="alert alert-warning mb-0">
+                          <small><strong>Substitution Reason:</strong> {{ item.get('substituteReason')?.value }}</small>
+                        </div>
+                      </div>
+
+                      <div class="col-md-12 mt-2">
+                        <label class="form-label small">Remarks</label>
+                        <input type="text" class="form-control form-control-sm" formControlName="remarks" 
+                               placeholder="Any special instructions or notes...">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Payment Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3">
+                    <label class="form-label">Payment Status <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="paymentStatus">
+                      <option *ngFor="let status of paymentStatuses" [value]="status">{{ status }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3" *ngIf="dispensingForm.get('paymentStatus')?.value === 'Paid'">
+                    <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="paymentMethod">
+                      <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3" *ngIf="dispensingForm.get('paymentStatus')?.value === 'Paid'">
+                    <label class="form-label">Payment Reference</label>
+                    <input type="text" class="form-control" formControlName="paymentReference" 
+                           placeholder="Transaction ID / Receipt No">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Total Amount</label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input type="text" class="form-control" [value]="getTotalAmount().toFixed(2)" readonly>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12">
+                    <label class="form-label">General Remarks</label>
+                    <textarea class="form-control" formControlName="remarks" rows="2" 
+                              placeholder="Any general remarks about this dispensing..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <!-- Summary Panel -->
+          <div class="alert alert-info">
+            <div class="row">
+              <div class="col-md-3">
+                <strong>Total Medicines:</strong> {{ items.length }}
+              </div>
+              <div class="col-md-3">
+                <strong>Dispensing:</strong> {{ getDispensedCount() }}
+              </div>
+              <div class="col-md-3">
+                <strong>Out of Stock:</strong> {{ getOutOfStockCount() }}
+              </div>
+              <div class="col-md-3">
+                <strong>Total Amount:</strong> ₹{{ getTotalAmount().toFixed(2) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+              <i class="ph-x"></i> Cancel
+            </button>
+            <div>
+              <button type="button" class="btn btn-warning me-2" 
+                      (click)="dispense('partial')"
+                      [disabled]="isSubmitting || !isPartialDispensing()"
+                      *ngIf="getOutOfStockCount() > 0">
+                <i class="ph-package"></i> Partial Dispense ({{ getDispensedCount() }}/{{ items.length }})
+              </button>
+              <button type="button" class="btn btn-primary" 
+                      (click)="dispense('full')"
+                      [disabled]="isSubmitting || getDispensedCount() !== items.length">
+                <i class="ph-check-circle"></i> 
+                {{ isSubmitting ? 'Dispensing...' : 'Complete Dispensing' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

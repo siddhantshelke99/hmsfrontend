@@ -1,0 +1,491 @@
+<div class="container-fluid py-4">
+  <app-loader *ngIf="isLoading"></app-loader>
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="mb-0">{{ getReportTitle() }}</h2>
+      <p class="text-muted">Inventory stock analysis and management</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" (click)="refreshReport()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer"></i> Print
+        </button>
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download"></i> Export
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.PDF)">Export as PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.EXCEL)">Export as Excel</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.CSV)">Export as CSV</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Type Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'STOCK'" (click)="switchReport('STOCK')">
+        <i class="bi bi-box-seam"></i> Current Stock
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'EXPIRY'" (click)="switchReport('EXPIRY')">
+        <i class="bi bi-calendar-x"></i> Expiry Report
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'ABC'" (click)="switchReport('ABC')">
+        <i class="bi bi-bar-chart"></i> ABC Analysis
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'LOW_STOCK'" (click)="switchReport('LOW_STOCK')">
+        <i class="bi bi-exclamation-triangle"></i> Low Stock
+      </a>
+    </li>
+  </ul>
+
+  <!-- Stock Report -->
+  <div *ngIf="currentReport === 'STOCK' && stockReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Report Date</label>
+            <input type="date" class="form-control" formControlName="reportDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadStockReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Items</h6>
+                <h3 class="mb-0">{{ stockReport.summary.totalItems }}</h3>
+              </div>
+              <div class="stat-icon bg-primary">
+                <i class="bi bi-box-seam"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Value</h6>
+                <h3 class="mb-0">₹{{ stockReport.summary.totalValue.toLocaleString() }}</h3>
+              </div>
+              <div class="stat-icon bg-success">
+                <i class="bi bi-currency-rupee"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Low Stock</h6>
+                <h3 class="mb-0 text-warning">{{ stockReport.summary.lowStockCount }}</h3>
+              </div>
+              <div class="stat-icon bg-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Out of Stock</h6>
+                <h3 class="mb-0 text-danger">{{ stockReport.summary.outOfStockCount }}</h3>
+              </div>
+              <div class="stat-icon bg-danger">
+                <i class="bi bi-x-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Category</th>
+                <th class="text-end">Current Stock</th>
+                <th class="text-end">Min Stock</th>
+                <th class="text-end">Max Stock</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Total Value</th>
+                <th>Status</th>
+                <th class="text-center">Days to Stockout</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stockReport.medicines; trackBy: trackByMedicineId">
+                <td>
+                  <strong>{{ item.medicineName }}</strong>
+                  <small class="d-block text-muted">{{ item.medicineId }}</small>
+                </td>
+                <td>{{ item.category }}</td>
+                <td class="text-end">{{ item.currentStock }}</td>
+                <td class="text-end">{{ item.minimumStock }}</td>
+                <td class="text-end">{{ item.maximumStock }}</td>
+                <td class="text-end">₹{{ item.unitPrice.toFixed(2) }}</td>
+                <td class="text-end">₹{{ item.totalValue.toLocaleString() }}</td>
+                <td>
+                  <span [class]="getStockStatusClass(item.stockStatus)">
+                    {{ item.stockStatus }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span *ngIf="item.daysToStockout" 
+                        [class]="item.daysToStockout < 7 ? 'text-danger fw-bold' : item.daysToStockout < 14 ? 'text-warning' : 'text-success'">
+                    {{ item.daysToStockout }} days
+                  </span>
+                  <span *ngIf="!item.daysToStockout" class="text-muted">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expiry Report -->
+  <div *ngIf="currentReport === 'EXPIRY' && expiryReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Days to Check</label>
+            <select class="form-select" formControlName="expiryDays">
+              <option [value]="30">Next 30 Days</option>
+              <option [value]="60">Next 60 Days</option>
+              <option [value]="90">Next 90 Days</option>
+              <option [value]="180">Next 6 Months</option>
+              <option [value]="365">Next 1 Year</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadExpiryReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Expired Items</h6>
+                <h3 class="mb-0 text-danger">{{ expiryReport.summary.expiredCount }}</h3>
+                <small class="text-muted">₹{{ expiryReport.summary.expiredValue.toLocaleString() }}</small>
+              </div>
+              <div class="stat-icon bg-danger">
+                <i class="bi bi-x-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Expiring in 30 Days</h6>
+                <h3 class="mb-0 text-danger">{{ expiryReport.summary.expiring30Days }}</h3>
+                <small class="text-muted">₹{{ expiryReport.summary.expiring30Value.toLocaleString() }}</small>
+              </div>
+              <div class="stat-icon bg-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Expiring in 60 Days</h6>
+                <h3 class="mb-0 text-warning">{{ expiryReport.summary.expiring60Days }}</h3>
+                <small class="text-muted">₹{{ expiryReport.summary.expiring60Value.toLocaleString() }}</small>
+              </div>
+              <div class="stat-icon bg-info">
+                <i class="bi bi-clock"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Expiring in 90 Days</h6>
+                <h3 class="mb-0 text-info">{{ expiryReport.summary.expiring90Days }}</h3>
+                <small class="text-muted">₹{{ expiryReport.summary.expiring90Value.toLocaleString() }}</small>
+              </div>
+              <div class="stat-icon bg-primary">
+                <i class="bi bi-calendar"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expiry Table -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Batch Number</th>
+                <th>Expiry Date</th>
+                <th class="text-center">Days to Expiry</th>
+                <th class="text-end">Quantity</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Total Value</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of expiryReport.medicines" 
+                  [class.table-danger]="item.status === 'Expired'"
+                  [class.table-warning]="item.status === 'Expiring Soon'">
+                <td>
+                  <strong>{{ item.medicineName }}</strong>
+                  <small class="d-block text-muted">{{ item.medicineId }}</small>
+                </td>
+                <td>{{ item.batchNumber }}</td>
+                <td>{{ item.expiryDate | date:'dd/MM/yyyy' }}</td>
+                <td class="text-center">
+                  <span [class]="item.daysToExpiry < 0 ? 'text-danger fw-bold' : 
+                                 item.daysToExpiry < 30 ? 'text-danger' : 
+                                 item.daysToExpiry < 60 ? 'text-warning' : 'text-success'">
+                    {{ item.daysToExpiry < 0 ? 'EXPIRED' : item.daysToExpiry + ' days' }}
+                  </span>
+                </td>
+                <td class="text-end">{{ item.quantity }}</td>
+                <td class="text-end">₹{{ item.unitPrice.toFixed(2) }}</td>
+                <td class="text-end">₹{{ item.totalValue.toLocaleString() }}</td>
+                <td>{{ item.location }}</td>
+                <td>
+                  <span [class]="getExpiryStatusClass(item.status)">
+                    {{ item.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABC Analysis -->
+  <div *ngIf="currentReport === 'ABC' && abcReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Analysis Period</label>
+            <select class="form-select" formControlName="abcPeriod">
+              <option *ngFor="let period of reportPeriods" [value]="period">{{ period }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadABCAnalysis()">
+              Generate Analysis
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Category Summary -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card stat-card border-danger">
+          <div class="card-body">
+            <h5 class="text-danger mb-3">
+              <span [class]="getABCCategoryClass('A')">Category A</span>
+              <span class="float-end">{{ abcReport.categoryA.percentageValue.toFixed(1) }}%</span>
+            </h5>
+            <p class="mb-1">High value items requiring tight control</p>
+            <p class="text-muted mb-0">{{ abcReport.categoryA.itemCount }} items</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card border-warning">
+          <div class="card-body">
+            <h5 class="text-warning mb-3">
+              <span [class]="getABCCategoryClass('B')">Category B</span>
+              <span class="float-end">{{ abcReport.categoryB.percentageValue.toFixed(1) }}%</span>
+            </h5>
+            <p class="mb-1">Moderate value items with normal control</p>
+            <p class="text-muted mb-0">{{ abcReport.categoryB.itemCount }} items</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card border-info">
+          <div class="card-body">
+            <h5 class="text-info mb-3">
+              <span [class]="getABCCategoryClass('C')">Category C</span>
+              <span class="float-end">{{ abcReport.categoryC.percentageValue.toFixed(1) }}%</span>
+            </h5>
+            <p class="mb-1">Low value items with simple control</p>
+            <p class="text-muted mb-0">{{ abcReport.categoryC.itemCount }} items</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABC Analysis Table -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th class="text-end">Annual Consumption</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Annual Value</th>
+                <th class="text-center">Category</th>
+                <th class="text-end">Cumulative %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of abcReport.items; trackBy: trackByMedicineId">
+                <td>
+                  <strong>{{ item.medicineName }}</strong>
+                  <small class="d-block text-muted">{{ item.medicineId }}</small>
+                </td>
+                <td class="text-end">{{ item.annualConsumption }}</td>
+                <td class="text-end">₹{{ item.unitPrice.toFixed(2) }}</td>
+                <td class="text-end">₹{{ item.annualValue.toLocaleString() }}</td>
+                <td class="text-center">
+                  <span [class]="getABCCategoryClass(item.category)">
+                    {{ item.category }}
+                  </span>
+                </td>
+                <td class="text-end">{{ item.cumulativePercentage.toFixed(2) }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Report (uses stockReport data) -->
+  <div *ngIf="currentReport === 'LOW_STOCK' && stockReport">
+    <div class="alert alert-warning mb-4">
+      <i class="bi bi-exclamation-triangle"></i>
+      <strong>Low Stock Alert:</strong> The following {{ stockReport.summary.lowStockCount || 0 }} items require immediate attention for reordering.
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Category</th>
+                <th class="text-end">Current Stock</th>
+                <th class="text-end">Minimum Stock</th>
+                <th class="text-end">Reorder Level</th>
+                <th class="text-end">Shortage</th>
+                <th class="text-center">Days to Stockout</th>
+                <th>Last Purchase</th>
+                <th>Action Required</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of getLowStockItems(); trackBy: trackByMedicineId" class="table-warning">
+                <td>
+                  <strong>{{ item.medicineName }}</strong>
+                  <small class="d-block text-muted">{{ item.medicineId }}</small>
+                </td>
+                <td>{{ item.category }}</td>
+                <td class="text-end text-danger fw-bold">{{ item.currentStock }}</td>
+                <td class="text-end">{{ item.minimumStock }}</td>
+                <td class="text-end">{{ item.reorderLevel }}</td>
+                <td class="text-end text-danger">{{ item.minimumStock - item.currentStock }}</td>
+                <td class="text-center">
+                  <span *ngIf="item.daysToStockout" class="text-danger fw-bold">
+                    {{ item.daysToStockout }} days
+                  </span>
+                  <span *ngIf="!item.daysToStockout" class="text-danger fw-bold">CRITICAL</span>
+                </td>
+                <td>
+                  <span *ngIf="item.lastPurchaseDate">{{ item.lastPurchaseDate | date:'dd/MM/yyyy' }}</span>
+                  <span *ngIf="!item.lastPurchaseDate" class="text-muted">Never</span>
+                </td>
+                <td>
+                  <span class="badge bg-danger">Order Now</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

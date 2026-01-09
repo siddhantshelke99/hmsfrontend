@@ -1,0 +1,229 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-clock-counter-clockwise"></i> Dispensing History
+          </h4>
+          <button type="button" class="btn btn-success btn-sm" (click)="exportToExcel()">
+            <i class="ph-file-xls"></i> Export to Excel
+          </button>
+        </div>
+
+        <div class="card-body">
+          <!-- Filters -->
+          <form [formGroup]="filterForm">
+            <div class="row mb-4">
+              <!-- Search -->
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" formControlName="searchTerm" 
+                       placeholder="Prescription, Patient, Token...">
+              </div>
+
+              <!-- Date Range -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" formControlName="endDate">
+              </div>
+
+              <!-- Dispensing Status -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Dispensing Status</label>
+                <select class="form-select" formControlName="dispensingStatus">
+                  <option value="">All</option>
+                  <option *ngFor="let status of dispensingStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+
+              <!-- Payment Status -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Payment Status</label>
+                <select class="form-select" formControlName="paymentStatus">
+                  <option value="">All</option>
+                  <option *ngFor="let status of paymentStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" formControlName="paymentMethod">
+                  <option value="">All</option>
+                  <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
+                </select>
+              </div>
+
+              <!-- Dispensed By -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Dispensed By</label>
+                <input type="text" class="form-control" formControlName="dispensedBy" 
+                       placeholder="Pharmacist name...">
+              </div>
+
+              <!-- Show Returns -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Show Returns</label>
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" formControlName="showReturns">
+                  <label class="form-check-label">
+                    Include returns
+                  </label>
+                </div>
+              </div>
+
+              <!-- Clear Filters -->
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                  <i class="ph-x"></i> Clear Filters
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Summary -->
+          <div class="alert alert-info mb-4">
+            <div class="row text-center">
+              <div class="col-md-4">
+                <strong>Total Records:</strong> {{ totalRecords }}
+              </div>
+              <div class="col-md-4">
+                <strong>Current Page:</strong> {{ currentPage }} of {{ totalPages }}
+              </div>
+              <div class="col-md-4">
+                <strong>Records per Page:</strong> {{ pageSize }}
+              </div>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Prescription No</th>
+                  <th>Patient</th>
+                  <th>Token</th>
+                  <th>Dispensed Date</th>
+                  <th>Dispensed By</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="historyRecords.length === 0 && !isLoading">
+                  <td colspan="9" class="text-center text-muted py-4">
+                    No dispensing records found
+                  </td>
+                </tr>
+                <tr *ngFor="let record of historyRecords">
+                  <td>
+                    <strong>{{ record.prescriptionNumber }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.prescriptionId }}</small>
+                  </td>
+                  <td>
+                    {{ record.patientName }}
+                    <br>
+                    <small class="text-muted">{{ record.patientId }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ record.tokenNumber }}</span>
+                  </td>
+                  <td>
+                    {{ record.dispensedAt | date:'dd/MM/yyyy' }}
+                    <br>
+                    <small class="text-muted">{{ record.dispensedAt | date:'hh:mm a' }}</small>
+                  </td>
+                  <td>{{ record.dispensedBy }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(record.dispensingStatus)">
+                      {{ record.dispensingStatus }}
+                    </span>
+                    <div *ngIf="record.hasReturns" class="mt-1">
+                      <span class="badge bg-danger">Has Returns</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span [ngClass]="getPaymentStatusClass(record.paymentStatus)">
+                      <strong>{{ record.paymentStatus }}</strong>
+                    </span>
+                    <br>
+                    <small class="text-muted">{{ record.paymentMethod }}</small>
+                  </td>
+                  <td>
+                    <strong>₹{{ record.totalAmount.toFixed(2) }}</strong>
+                    <div *ngIf="record.refundAmount && record.refundAmount > 0" class="text-danger small">
+                      Refund: ₹{{ record.refundAmount.toFixed(2) }}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-primary" 
+                              (click)="viewDetails(record)"
+                              title="View Details">
+                        <i class="ph-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-info" 
+                              (click)="viewPrescription(record)"
+                              title="View Prescription">
+                        <i class="ph-file-text"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-success" 
+                              (click)="reprintLabel(record)"
+                              title="Reprint Labels">
+                        <i class="ph-printer"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between align-items-center mt-4" *ngIf="totalPages > 1">
+            <div>
+              Showing {{ (currentPage - 1) * pageSize + 1 }} to 
+              {{ Math.min(currentPage * pageSize, totalRecords) }} of 
+              {{ totalRecords }} records
+            </div>
+
+            <nav>
+              <ul class="pagination mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="previousPage()">
+                    <i class="ph-caret-left"></i> Previous
+                  </button>
+                </li>
+
+                <li class="page-item" *ngFor="let page of getPageNumbers()" 
+                    [class.active]="page === currentPage">
+                  <button class="page-link" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
+                </li>
+
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()">
+                    Next <i class="ph-caret-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

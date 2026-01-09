@@ -1,0 +1,38 @@
+.queue-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.queue-item {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f8f9fa;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.priority-emergency {
+    border-left: 4px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+  }
+
+  &.priority-urgent {
+    border-left: 4px solid #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+  }
+
+  h6 {
+    margin-bottom: 0.25rem;
+  }
+}
+
+.card-header {
+  h5 {
+    margin-bottom: 0;
+  }
+}

@@ -1,0 +1,334 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-prescription"></i> Create E-Prescription
+          </h4>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancel()">
+            <i class="ph-x"></i> Cancel
+          </button>
+        </div>
+
+        <div class="card-body">
+          <form [formGroup]="prescriptionForm">
+            
+            <!-- Patient Information -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Patient Information</h5>
+              </div>
+              <div class="card-body">
+                <div formGroupName="patientInfo">
+                  <div class="row mb-3" *ngIf="!selectedPatient">
+                    <div class="col-12">
+                      <label class="form-label">Search Patient <span class="text-danger">*</span></label>
+                      <app-patient-search (patientSelected)="onPatientSelected($event)"></app-patient-search>
+                    </div>
+                  </div>
+
+                  <div class="row" *ngIf="selectedPatient">
+                    <div class="col-md-3">
+                      <label class="form-label">Patient Name</label>
+                      <input type="text" class="form-control" formControlName="patientName" readonly>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Registration No.</label>
+                      <input type="text" class="form-control" formControlName="registrationNumber" readonly>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Age</label>
+                      <input type="text" class="form-control" formControlName="age" readonly>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Gender</label>
+                      <input type="text" class="form-control" formControlName="gender" readonly>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">&nbsp;</label>
+                      <button type="button" class="btn btn-outline-primary btn-sm d-block w-100" (click)="selectedPatient = null">
+                        <i class="ph-arrows-counter-clockwise"></i> Change Patient
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Doctor Information -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Doctor Information</h5>
+              </div>
+              <div class="card-body">
+                <div formGroupName="doctorInfo">
+                  <div class="row">
+                    <div class="col-md-3">
+                      <label class="form-label">Doctor Name <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" formControlName="doctorName" 
+                             [class.is-invalid]="prescriptionForm.get('doctorInfo.doctorName')?.invalid && prescriptionForm.get('doctorInfo.doctorName')?.touched">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Qualification</label>
+                      <input type="text" class="form-control" formControlName="qualification" placeholder="MBBS, MD">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Registration Number</label>
+                      <input type="text" class="form-control" formControlName="registrationNumber">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Department <span class="text-danger">*</span></label>
+                      <select class="form-select" formControlName="department"
+                              [class.is-invalid]="prescriptionForm.get('doctorInfo.department')?.invalid && prescriptionForm.get('doctorInfo.department')?.touched">
+                        <option value="">Select Department</option>
+                        <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clinical Details -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Clinical Details</h5>
+              </div>
+              <div class="card-body">
+                <div formGroupName="clinicalDetails">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Chief Complaints <span class="text-danger">*</span></label>
+                      <textarea class="form-control" formControlName="chiefComplaints" rows="2"
+                                [class.is-invalid]="prescriptionForm.get('clinicalDetails.chiefComplaints')?.invalid && prescriptionForm.get('clinicalDetails.chiefComplaints')?.touched"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Diagnosis <span class="text-danger">*</span></label>
+                      <textarea class="form-control" formControlName="diagnosis" rows="2"
+                                [class.is-invalid]="prescriptionForm.get('clinicalDetails.diagnosis')?.invalid && prescriptionForm.get('clinicalDetails.diagnosis')?.touched"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-2">
+                      <label class="form-label">BP (mmHg)</label>
+                      <input type="text" class="form-control" formControlName="bloodPressure" placeholder="120/80">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Temp (°F)</label>
+                      <input type="number" class="form-control" formControlName="temperature" placeholder="98.6" step="0.1">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Pulse (bpm)</label>
+                      <input type="number" class="form-control" formControlName="pulse" placeholder="72">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Weight (kg)</label>
+                      <input type="number" class="form-control" formControlName="weight" placeholder="70" step="0.1">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Height (cm)</label>
+                      <input type="number" class="form-control" formControlName="height" placeholder="170">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Medicines -->
+            <div class="card mb-4">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Medicines</h5>
+                <span class="badge bg-primary">{{ items.length }} Medicine(s)</span>
+              </div>
+              <div class="card-body">
+                <!-- Medicine Search -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Search & Add Medicine</label>
+                    <input type="text" class="form-control" placeholder="Search by medicine name, generic name, or type"
+                           #medicineSearch
+                           (input)="searchMedicines(medicineSearch.value)">
+                    
+                    <div class="list-group mt-2" *ngIf="medicineSearchResults.length > 0">
+                      <button type="button" class="list-group-item list-group-item-action" 
+                              *ngFor="let medicine of medicineSearchResults"
+                              (click)="addMedicine(medicine)">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <div>
+                            <strong>{{ medicine.name }}</strong>
+                            <span class="text-muted ms-2" *ngIf="medicine.strength">({{ medicine.strength }})</span>
+                            <br>
+                            <small class="text-muted">{{ medicine.genericName }} - {{ medicine.medicineType }}</small>
+                          </div>
+                          <span class="badge" [class.bg-success]="medicine.availableStock && medicine.availableStock > medicine.reorderLevel!"
+                                [class.bg-warning]="medicine.availableStock && medicine.availableStock <= medicine.reorderLevel! && medicine.availableStock > 0"
+                                [class.bg-danger]="!medicine.availableStock || medicine.availableStock === 0">
+                            Stock: {{ medicine.availableStock || 0 }}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Medicine List -->
+                <div formArrayName="items">
+                  <div class="alert alert-info" *ngIf="items.length === 0">
+                    <i class="ph-info"></i> No medicines added yet. Search and add medicines above.
+                  </div>
+
+                  <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="card mb-3 border">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h6 class="mb-0">
+                          {{ item.get('medicineName')?.value }}
+                          <span class="text-muted" *ngIf="item.get('strength')?.value">({{ item.get('strength')?.value }})</span>
+                          <span class="badge bg-secondary ms-2">{{ item.get('medicineType')?.value }}</span>
+                        </h6>
+                        <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeMedicine(i)">
+                          <i class="ph-trash"></i>
+                        </button>
+                      </div>
+
+                      <div class="row">
+                        <!-- Dosage -->
+                        <div class="col-md-5">
+                          <label class="form-label fw-bold">Dosage</label>
+                          <div class="row g-2">
+                            <div class="col-3">
+                              <label class="form-label text-muted small">Morning</label>
+                              <input type="number" class="form-control form-control-sm" formControlName="dosageMorning" min="0" step="0.5">
+                            </div>
+                            <div class="col-3">
+                              <label class="form-label text-muted small">Afternoon</label>
+                              <input type="number" class="form-control form-control-sm" formControlName="dosageAfternoon" min="0" step="0.5">
+                            </div>
+                            <div class="col-3">
+                              <label class="form-label text-muted small">Evening</label>
+                              <input type="number" class="form-control form-control-sm" formControlName="dosageEvening" min="0" step="0.5">
+                            </div>
+                            <div class="col-3">
+                              <label class="form-label text-muted small">Night</label>
+                              <input type="number" class="form-control form-control-sm" formControlName="dosageNight" min="0" step="0.5">
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Duration -->
+                        <div class="col-md-3">
+                          <label class="form-label fw-bold">Duration</label>
+                          <div class="input-group">
+                            <input type="number" class="form-control" formControlName="duration" min="1">
+                            <select class="form-select" formControlName="durationUnit">
+                              <option *ngFor="let unit of durationUnits" [value]="unit">{{ unit }}</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <!-- Total Quantity -->
+                        <div class="col-md-2">
+                          <label class="form-label fw-bold">Total Qty</label>
+                          <input type="number" class="form-control" formControlName="totalQuantity" readonly>
+                          <small class="text-muted">Stock: {{ item.get('availableStock')?.value }}</small>
+                        </div>
+
+                        <!-- Frequency -->
+                        <div class="col-md-2">
+                          <label class="form-label fw-bold">Frequency</label>
+                          <select class="form-select" formControlName="frequency">
+                            <option *ngFor="let freq of frequencies" [value]="freq">{{ freq }}</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="row mt-3">
+                        <div class="col-md-6">
+                          <label class="form-label">Instructions</label>
+                          <input type="text" class="form-control form-control-sm" formControlName="instructions" placeholder="Take with water">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Timing</label>
+                          <div class="d-flex gap-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" formControlName="beforeFood">
+                              <label class="form-check-label small">Before Food</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" formControlName="afterFood">
+                              <label class="form-check-label small">After Food</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" formControlName="withFood">
+                              <label class="form-check-label small">With Food</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" formControlName="sos">
+                              <label class="form-check-label small">SOS</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" formControlName="substitutionAllowed">
+                              <label class="form-check-label small">Allow Substitution</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Additional Information</h5>
+              </div>
+              <div class="card-body">
+                <div formGroupName="additionalInfo">
+                  <div class="row">
+                    <div class="col-md-12 mb-3">
+                      <label class="form-label">General Instructions</label>
+                      <textarea class="form-control" formControlName="instructions" rows="2" 
+                                placeholder="General advice and precautions"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Follow-up Date</label>
+                      <input type="date" class="form-control" formControlName="followUpDate">
+                    </div>
+                    <div class="col-md-8">
+                      <label class="form-label">Follow-up Instructions</label>
+                      <input type="text" class="form-control" formControlName="followUpInstructions" 
+                             placeholder="Instructions for follow-up visit">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+              <i class="ph-x"></i> Cancel
+            </button>
+            <div>
+              <button type="button" class="btn btn-outline-primary me-2" (click)="savePrescription('DRAFT')" [disabled]="isSubmitting">
+                <i class="ph-floppy-disk"></i> Save as Draft
+              </button>
+              <button type="button" class="btn btn-primary" (click)="savePrescription('ACTIVE')" [disabled]="isSubmitting">
+                <i class="ph-check-circle"></i> 
+                {{ isSubmitting ? 'Creating...' : 'Confirm & Send to Pharmacy' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

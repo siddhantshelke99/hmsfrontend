@@ -1,0 +1,223 @@
+<div class="container-fluid py-4 no-print">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-file-text"></i> Prescription Details
+          </h4>
+          <div>
+            <button type="button" class="btn btn-outline-primary btn-sm me-2" (click)="printPrescription()">
+              <i class="ph-printer"></i> Print
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm me-2" 
+                    *ngIf="prescription && (prescription.status === PrescriptionStatus.ACTIVE || prescription.status === PrescriptionStatus.DRAFT)"
+                    (click)="cancelPrescription()">
+              <i class="ph-x-circle"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="backToList()">
+              <i class="ph-arrow-left"></i> Back
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Printable Prescription -->
+<div class="prescription-container" *ngIf="prescription">
+  <div class="prescription-header">
+    <div class="hospital-info text-center">
+      <h2 class="mb-1">Government Hospital</h2>
+      <p class="mb-0">GHIPAS - Government Hospital Inventory & Prescription Accountability System</p>
+      <p class="text-muted">Address Line 1, City, State, Pincode</p>
+      <hr class="my-3">
+    </div>
+
+    <div class="prescription-meta">
+      <div class="row">
+        <div class="col-6">
+          <p class="mb-1"><strong>Prescription No:</strong> {{ prescription.prescriptionNumber }}</p>
+          <p class="mb-1"><strong>Date:</strong> {{ prescription.visitDate | date:'dd/MM/yyyy hh:mm a' }}</p>
+          <p class="mb-1"><strong>Department:</strong> {{ prescription.department }}</p>
+        </div>
+        <div class="col-6 text-end">
+          <span class="badge no-print" [ngClass]="getStatusBadgeClass(prescription.status)">{{ prescription.status }}</span>
+          <span class="badge no-print ms-2" [ngClass]="getDispensingStatusBadgeClass(prescription.dispensedStatus)">
+            {{ prescription.dispensedStatus }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prescription-body">
+    <!-- Patient Information -->
+    <div class="section">
+      <h5 class="section-title">Patient Information</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Name:</strong> {{ prescription.patientName }}</p>
+          <p class="mb-1"><strong>Registration No:</strong> {{ prescription.patientRegistrationNumber }}</p>
+        </div>
+        <div class="col-md-3">
+          <p class="mb-1"><strong>Age:</strong> {{ prescription.patientAge }} years</p>
+          <p class="mb-1"><strong>Gender:</strong> {{ prescription.patientGender }}</p>
+        </div>
+        <div class="col-md-3" *ngIf="prescription.vitalSigns">
+          <p class="mb-1" *ngIf="prescription.vitalSigns.bloodPressure">
+            <strong>BP:</strong> {{ prescription.vitalSigns.bloodPressure }} mmHg
+          </p>
+          <p class="mb-1" *ngIf="prescription.vitalSigns.weight">
+            <strong>Weight:</strong> {{ prescription.vitalSigns.weight }} kg
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinical Details -->
+    <div class="section">
+      <h5 class="section-title">Clinical Details</h5>
+      <div class="row">
+        <div class="col-md-6" *ngIf="prescription.chiefComplaints">
+          <p class="mb-1"><strong>Chief Complaints:</strong></p>
+          <p class="clinical-text">{{ prescription.chiefComplaints }}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Diagnosis:</strong></p>
+          <p class="clinical-text">{{ prescription.diagnosis }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vital Signs -->
+    <div class="section" *ngIf="prescription.vitalSigns && (prescription.vitalSigns.temperature || prescription.vitalSigns.pulse)">
+      <h5 class="section-title">Vital Signs</h5>
+      <div class="row">
+        <div class="col-md-3" *ngIf="prescription.vitalSigns.bloodPressure">
+          <p><strong>Blood Pressure:</strong> {{ prescription.vitalSigns.bloodPressure }} mmHg</p>
+        </div>
+        <div class="col-md-3" *ngIf="prescription.vitalSigns.temperature">
+          <p><strong>Temperature:</strong> {{ prescription.vitalSigns.temperature }}°F</p>
+        </div>
+        <div class="col-md-3" *ngIf="prescription.vitalSigns.pulse">
+          <p><strong>Pulse:</strong> {{ prescription.vitalSigns.pulse }} bpm</p>
+        </div>
+        <div class="col-md-3" *ngIf="prescription.vitalSigns.weight && prescription.vitalSigns.height">
+          <p><strong>BMI:</strong> {{ (prescription.vitalSigns.weight / ((prescription.vitalSigns.height / 100) * (prescription.vitalSigns.height / 100))) | number:'1.1-1' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prescription Items (Medicines) -->
+    <div class="section">
+      <h5 class="section-title">℞ Prescription</h5>
+      <table class="table table-bordered medicine-table">
+        <thead class="table-light">
+          <tr>
+            <th width="5%">#</th>
+            <th width="25%">Medicine Name</th>
+            <th width="20%">Dosage</th>
+            <th width="15%">Duration</th>
+            <th width="10%">Quantity</th>
+            <th width="25%">Instructions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of prescription.items; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ item.medicineName }}</strong>
+              <span *ngIf="item.strength" class="text-muted d-block">{{ item.strength }}</span>
+              <small class="text-muted">{{ item.medicineType }}</small>
+            </td>
+            <td>
+              <div class="dosage-display">
+                {{ getDosageText(item) }}
+              </div>
+              <small class="text-muted">{{ item.frequency }}</small>
+            </td>
+            <td>
+              {{ item.duration }} {{ item.durationUnit }}
+            </td>
+            <td class="text-center">
+              <strong>{{ item.totalQuantity }}</strong>
+            </td>
+            <td>
+              <div class="mb-1">{{ getFoodTimingText(item) }}</div>
+              <div *ngIf="item.instructions" class="text-muted small">{{ item.instructions }}</div>
+              <div *ngIf="item.sos" class="badge bg-warning small">SOS - If Needed</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- General Instructions -->
+    <div class="section" *ngIf="prescription.instructions">
+      <h5 class="section-title">General Instructions</h5>
+      <p class="instructions-text">{{ prescription.instructions }}</p>
+    </div>
+
+    <!-- Follow-up -->
+    <div class="section" *ngIf="prescription.followUpDate || prescription.followUpInstructions">
+      <h5 class="section-title">Follow-up</h5>
+      <p *ngIf="prescription.followUpDate" class="mb-1">
+        <strong>Next Visit Date:</strong> {{ prescription.followUpDate | date:'dd/MM/yyyy' }}
+      </p>
+      <p *ngIf="prescription.followUpInstructions" class="mb-0">
+        <strong>Instructions:</strong> {{ prescription.followUpInstructions }}
+      </p>
+    </div>
+
+    <!-- Dispensing Status (no-print) -->
+    <div class="section no-print" *ngIf="prescription.dispensedDate || prescription.dispensedBy">
+      <h5 class="section-title">Dispensing Information</h5>
+      <div class="row">
+        <div class="col-md-4" *ngIf="prescription.dispensedStatus">
+          <p><strong>Status:</strong> 
+            <span class="badge" [ngClass]="getDispensingStatusBadgeClass(prescription.dispensedStatus)">
+              {{ prescription.dispensedStatus }}
+            </span>
+          </p>
+        </div>
+        <div class="col-md-4" *ngIf="prescription.dispensedDate">
+          <p><strong>Dispensed Date:</strong> {{ prescription.dispensedDate | date:'dd/MM/yyyy hh:mm a' }}</p>
+        </div>
+        <div class="col-md-4" *ngIf="prescription.dispensedBy">
+          <p><strong>Dispensed By:</strong> {{ prescription.dispensedBy }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancelled Info (no-print) -->
+    <div class="section no-print" *ngIf="prescription.status === PrescriptionStatus.CANCELLED">
+      <div class="alert alert-danger">
+        <h6 class="alert-heading">Prescription Cancelled</h6>
+        <p class="mb-0" *ngIf="prescription.cancelledReason">
+          <strong>Reason:</strong> {{ prescription.cancelledReason }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prescription-footer">
+    <div class="row mt-5">
+      <div class="col-6">
+        <p class="mb-1"><small class="text-muted">This is a computer-generated prescription</small></p>
+        <p class="mb-0"><small class="text-muted">Prescription generated on: {{ prescription.createdAt | date:'dd/MM/yyyy hh:mm a' }}</small></p>
+      </div>
+      <div class="col-6 text-end">
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <p class="mb-0"><strong>{{ prescription.doctorName }}</strong></p>
+          <p class="mb-0 text-muted" *ngIf="prescription.doctorQualification">{{ prescription.doctorQualification }}</p>
+          <p class="mb-0 text-muted" *ngIf="prescription.doctorRegistrationNumber">Reg. No: {{ prescription.doctorRegistrationNumber }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

@@ -1,0 +1,269 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Doctor Dashboard</h2>
+      <p class="text-muted mb-0">Patient Queue & Consultations</p>
+    </div>
+    <div class="text-end">
+      <button class="btn btn-outline-primary btn-sm" (click)="refreshDashboard()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <small class="d-block text-muted mt-2">
+        Last updated: {{ lastUpdated | date:'short' }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <app-loader *ngIf="isLoading" message="Loading dashboard..." [overlay]="false"></app-loader>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && dashboardData">
+    
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-primary">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Today's Tokens</p>
+                <h2 class="mb-0 text-primary">{{ dashboardData.todayTokens }}</h2>
+              </div>
+              <div class="stat-icon bg-primary-subtle">
+                <i class="bi bi-ticket-perforated-fill text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-warning">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Pending</p>
+                <h2 class="mb-0 text-warning">{{ dashboardData.pendingConsultations }}</h2>
+              </div>
+              <div class="stat-icon bg-warning-subtle">
+                <i class="bi bi-hourglass-split text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-success">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Completed</p>
+                <h2 class="mb-0 text-success">{{ dashboardData.completedToday }}</h2>
+              </div>
+              <div class="stat-icon bg-success-subtle">
+                <i class="bi bi-check-circle-fill text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-info">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Prescriptions</p>
+                <h2 class="mb-0 text-info">{{ dashboardData.todayPrescriptions }}</h2>
+              </div>
+              <div class="stat-icon bg-info-subtle">
+                <i class="bi bi-file-medical-fill text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Queue & Statistics -->
+    <div class="row g-3 mb-4">
+      <!-- Patient Queue -->
+      <div class="col-lg-8">
+        <div class="card h-100">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-people-fill me-2"></i>
+              Patient Queue ({{ dashboardData.patientQueue.length }})
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Token</th>
+                    <th>Patient Name</th>
+                    <th>Reg. No</th>
+                    <th>Department</th>
+                    <th>Waiting Time</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let patient of dashboardData.patientQueue" 
+                      [class.table-warning]="patient.status === 'IN_PROGRESS'"
+                      [class.table-danger]="patient.priority === 'URGENT'">
+                    <td>
+                      <strong>{{ patient.tokenNumber }}</strong>
+                    </td>
+                    <td>{{ patient.patientName }}</td>
+                    <td>
+                      <small class="text-muted">{{ patient.registrationNumber }}</small>
+                    </td>
+                    <td>{{ patient.department }}</td>
+                    <td>
+                      <span [class]="getWaitingTimeColor(patient.waitingTime)">
+                        <i class="bi bi-clock me-1"></i>{{ patient.waitingTime }} min
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [class]="getPriorityBadge(patient.priority)">
+                        {{ patient.priority }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-primary" 
+                              (click)="startConsultation(patient)"
+                              [disabled]="patient.status === 'IN_PROGRESS'">
+                        <i class="bi bi-play-fill"></i>
+                        {{ patient.status === 'IN_PROGRESS' ? 'In Progress' : 'Start' }}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="dashboardData.patientQueue.length === 0">
+                    <td colspan="7" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                      No patients in queue
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/patients/tokens" class="btn btn-sm btn-outline-primary">
+              View All Tokens <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Statistics -->
+      <div class="col-lg-4">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-graph-up me-2"></i>
+              Today's Statistics
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="stat-item mb-4">
+              <label class="text-muted small mb-1">Total Patients Today</label>
+              <h3 class="mb-0 text-primary">{{ dashboardData.myStatistics.totalPatientsToday }}</h3>
+            </div>
+
+            <div class="stat-item mb-4">
+              <label class="text-muted small mb-1">Total Prescriptions</label>
+              <h3 class="mb-0 text-success">{{ dashboardData.myStatistics.totalPrescriptionsToday }}</h3>
+            </div>
+
+            <div class="stat-item mb-4">
+              <label class="text-muted small mb-1">Avg. Consultation Time</label>
+              <h3 class="mb-0 text-info">{{ dashboardData.myStatistics.averageConsultationTime }} min</h3>
+            </div>
+
+            <div class="stat-item">
+              <label class="text-muted small mb-1">Most Prescribed</label>
+              <p class="mb-0">
+                <span class="badge bg-secondary">{{ dashboardData.myStatistics.mostPrescribedMedicine }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Prescriptions -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-file-medical me-2"></i>
+              Recent Prescriptions
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Prescription No</th>
+                    <th>Patient Name</th>
+                    <th>Medicines</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let prescription of dashboardData.recentPrescriptions">
+                    <td><strong>{{ prescription.prescriptionNumber }}</strong></td>
+                    <td>{{ prescription.patientName }}</td>
+                    <td>
+                      <span class="badge bg-info">{{ prescription.medicineCount }} items</span>
+                    </td>
+                    <td>
+                      <small>{{ prescription.createdAt | date:'short' }}</small>
+                    </td>
+                    <td>
+                      <span class="badge" 
+                            [class.bg-success]="prescription.status === 'DISPENSED'"
+                            [class.bg-warning]="prescription.status === 'PENDING' || prescription.status === 'PARTIAL'"
+                            [class.bg-danger]="prescription.status === 'CANCELLED'">
+                        {{ prescription.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" 
+                              [routerLink]="['/prescriptions', prescription.id]">
+                        <i class="bi bi-eye"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="dashboardData.recentPrescriptions.length === 0">
+                    <td colspan="6" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                      No recent prescriptions
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/prescriptions" class="btn btn-sm btn-outline-primary">
+              View All Prescriptions <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

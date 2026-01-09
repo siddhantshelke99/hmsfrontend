@@ -1,0 +1,153 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Upload Invoice (OCR)</h2>
+      <p class="text-muted mb-0">Upload invoice for automatic data extraction</p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i> Back to List
+    </button>
+  </div>
+
+  <!-- Feature Notice -->
+  <div class="alert alert-info" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <strong>OCR Feature - Under Development</strong><br>
+    This feature will automatically extract invoice details using OCR technology. For now, please use the manual entry form.
+  </div>
+
+  <!-- Upload Area -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Upload Invoice Document</h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- Drag & Drop Area -->
+          <div 
+            class="upload-area"
+            [class.dragging]="isDragging"
+            [class.has-file]="selectedFile"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)">
+            
+            <div *ngIf="!selectedFile" class="upload-placeholder">
+              <i class="bi bi-cloud-upload display-1 text-muted mb-3"></i>
+              <h5>Drag & Drop Invoice Here</h5>
+              <p class="text-muted">or</p>
+              <label for="fileInput" class="btn btn-outline-primary">
+                <i class="bi bi-folder2-open me-2"></i>
+                Browse Files
+              </label>
+              <input 
+                type="file" 
+                id="fileInput" 
+                class="d-none" 
+                accept=".pdf,.jpg,.jpeg,.png"
+                (change)="onFileSelected($event)">
+              <p class="text-muted mt-3 small">
+                Supported formats: PDF, JPG, PNG (Max: 10MB)
+              </p>
+            </div>
+
+            <!-- Selected File -->
+            <div *ngIf="selectedFile && !isUploading" class="selected-file">
+              <div class="file-icon">
+                <i class="bi bi-file-earmark-pdf display-1 text-danger" *ngIf="selectedFile.type === 'application/pdf'"></i>
+                <i class="bi bi-file-earmark-image display-1 text-primary" *ngIf="selectedFile.type.startsWith('image/')"></i>
+              </div>
+              <div class="file-details">
+                <h6 class="mb-1">{{ selectedFile.name }}</h6>
+                <p class="text-muted mb-0">{{ getFileSize() }}</p>
+              </div>
+              <button class="btn btn-sm btn-outline-danger" (click)="clearFile()">
+                <i class="bi bi-x-circle"></i> Remove
+              </button>
+            </div>
+
+            <!-- Upload Progress -->
+            <div *ngIf="isUploading" class="upload-progress">
+              <div class="text-center mb-3">
+                <div class="spinner-border text-primary mb-3" role="status">
+                  <span class="visually-hidden">Uploading...</span>
+                </div>
+                <h6>Processing Invoice...</h6>
+                <p class="text-muted">{{ uploadProgress }}% Complete</p>
+              </div>
+              <div class="progress" style="height: 25px;">
+                <div 
+                  class="progress-bar progress-bar-striped progress-bar-animated"
+                  role="progressbar" 
+                  [style.width.%]="uploadProgress"
+                  [attr.aria-valuenow]="uploadProgress" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ uploadProgress }}%
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- OCR Features Info -->
+          <div class="mt-4" *ngIf="!selectedFile">
+            <h6 class="mb-3">Planned OCR Features:</h6>
+            <ul class="feature-list">
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Automatic extraction of supplier details
+              </li>
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Invoice number and date recognition
+              </li>
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Medicine names and batch numbers
+              </li>
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Quantity, price, and total calculations
+              </li>
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Expiry date detection
+              </li>
+              <li>
+                <i class="bi bi-check-circle text-success me-2"></i>
+                Pre-filled form for review and submission
+              </li>
+            </ul>
+          </div>
+
+        </div>
+        <div class="card-footer" *ngIf="selectedFile && !isUploading">
+          <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
+            <button class="btn btn-outline-primary" (click)="clearFile()">
+              <i class="bi bi-arrow-repeat"></i> Choose Different File
+            </button>
+            <button class="btn btn-primary" (click)="uploadInvoice()">
+              <i class="bi bi-upload me-2"></i>
+              Upload & Process
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Entry Option -->
+      <div class="text-center mt-4">
+        <p class="text-muted mb-2">Prefer to enter details manually?</p>
+        <button class="btn btn-outline-primary" routerLink="/inventory/inward/create">
+          <i class="bi bi-pencil-square me-2"></i>
+          Go to Manual Entry Form
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

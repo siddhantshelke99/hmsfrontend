@@ -1,0 +1,99 @@
+<div class="ms-auto">
+  <ul class="list-unstyled">
+    <li>
+      <div class="dropdown pc-h-item">
+        <a
+          class="pc-head-link head-link-primary arrow-none me-0"
+          href="https://github.com/codedthemes/berry-free-angular-admin-template/"
+          target="_blank"
+        >
+          <i class="ti ti-brand-github"></i>
+        </a>
+      </div>
+    </li>
+    <li>
+      <div class="dropdown pc-h-item" ngbDropdown>
+        <a
+          class="pc-head-link head-link-secondary dropdown-toggle arrow-none me-0"
+          data-bs-toggle="dropdown"
+          href="javascript:"
+          ngbDropdownToggle
+        >
+          <i class="ti ti-bell"></i>
+        </a>
+        <div class="dropdown-menu dropdown-notification dropdown-menu-end pc-h-dropdown" ngbDropdownMenu>
+          <div class="dropdown-header">
+            <a href="javascript:!" class="link-primary float-end text-decoration-underline">Mark as all read</a>
+            <h5>
+              All Notification
+              <span class="badge bg-warning rounded-pill ms-1">01</span>
+            </h5>
+          </div>
+         
+          <div class="dropdown-divider"></div>
+          <div class="text-center py-2">
+            <a href="javascript:" class="link-primary">Mark as all read</a>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li>
+      <div class="dropdown pc-h-item header-user-profile" ngbDropdown>
+        <a
+          class="pc-head-link head-link-primary dropdown-toggle arrow-none me-0"
+          data-bs-toggle="dropdown"
+          href="javascript:"
+          ngbDropdownToggle
+        >
+          <img src="assets/images/user/avatar-2.jpg" alt="user-image" class="user-avtar" />
+          <span>
+            <i class="ti ti-settings"></i>
+          </span>
+        </a>
+        <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown" ngbDropdownMenu>
+          <div class="dropdown-header">
+            <h4>
+              Good Morning,
+              <span class="small text-muted">John Doe</span>
+            </h4>
+            <p class="text-muted">Project Admin</p>
+            <form class="header-search">
+              <div class="search-btn">
+                <i class="ti ti-search"></i>
+              </div>
+              <input type="search" class="form-control" placeholder="Search profile options" />
+            </form>
+            <hr />
+            <ng-scrollbar style="height: calc(100vh - 280px)" visibility="hover">
+              
+              <hr />
+              <div class="settings-block bg-light-primary rounded">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />
+                  <label class="form-check-label" for="flexSwitchCheckDefault">Start DND Mode</label>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked />
+                  <label class="form-check-label" for="flexSwitchCheckChecked">Allow Notifications</label>
+                </div>
+              </div>
+              <hr />
+              <!-- <a [routerLink]="['/guest/register']" class="dropdown-item">
+                <i class="ti ti-settings"></i>
+                <span>Account Profile</span>
+              </a>
+              <a href="javascript:" class="dropdown-item">
+                <i class="ti ti-user"></i>
+                <span>Social Profile</span>
+              </a> -->
+              <a [routerLink]="['/guest/login']" class="dropdown-item">
+                <i class="ti ti-logout"></i>
+                <span>Logout</span>
+              </a>
+            </ng-scrollbar>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>

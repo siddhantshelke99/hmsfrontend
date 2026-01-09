@@ -1,0 +1,14 @@
+<div class="loader-container" [class.overlay]="overlay">
+  <div class="spinner-wrapper text-center">
+    <div 
+      class="spinner-border text-primary" 
+      role="status"
+      [style.width]="spinnerSize"
+      [style.height]="spinnerSize">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div class="mt-3 text-muted" *ngIf="message">
+      <strong>{{ message }}</strong>
+    </div>
+  </div>
+</div>

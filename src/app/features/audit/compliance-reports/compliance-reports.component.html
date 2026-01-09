@@ -1,0 +1,245 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Drug Control Compliance Card -->
+    <div class="col-12 mb-4" *ngIf="drugControlCompliance">
+      <div class="card border-primary">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="ph-shield-check"></i> Drug Control Compliance Status
+          </h5>
+          <div>
+            <button type="button" class="btn btn-light btn-sm me-2" (click)="verifyNDPS()">
+              <i class="ph-certificate"></i> Verify NDPS
+            </button>
+            <button type="button" class="btn btn-warning btn-sm" (click)="runDrugAudit()">
+              <i class="ph-magnifying-glass"></i> Run Audit
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <p class="mb-2"><strong>Last Check:</strong> {{ drugControlCompliance.checkDate | date:'dd/MM/yyyy hh:mm a' }}</p>
+              <p class="mb-2"><strong>Total Stock Value:</strong> ₹{{ drugControlCompliance.totalStockValue.toFixed(2) }}</p>
+            </div>
+            <div class="col-md-3">
+              <p class="mb-2">
+                <strong>NDPS Compliant:</strong> 
+                <span [class]="drugControlCompliance.ndpsCompliant ? 'text-success' : 'text-danger'">
+                  <i [class]="drugControlCompliance.ndpsCompliant ? 'ph-check-circle' : 'ph-x-circle'"></i>
+                  {{ drugControlCompliance.ndpsCompliant ? 'Yes' : 'No' }}
+                </span>
+              </p>
+              <p class="mb-2">
+                <strong>Register Up-to-Date:</strong> 
+                <span [class]="drugControlCompliance.registerUpToDate ? 'text-success' : 'text-danger'">
+                  {{ drugControlCompliance.registerUpToDate ? 'Yes' : 'No' }}
+                </span>
+              </p>
+            </div>
+            <div class="col-md-3">
+              <p class="mb-2"><strong>Discrepancies:</strong> <span class="text-danger">{{ drugControlCompliance.discrepanciesFound }}</span></p>
+              <p class="mb-2"><strong>Issues:</strong> <span class="text-warning">{{ drugControlCompliance.issues.length }}</span></p>
+            </div>
+            <div class="col-md-3">
+              <p class="mb-2"><strong>Next Review:</strong> {{ drugControlCompliance.nextReviewDate | date:'dd/MM/yyyy' }}</p>
+              <p class="mb-2"><strong>Prescriptions Verified:</strong> {{ drugControlCompliance.prescriptionsVerified }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Reports Card -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-file-text"></i> Compliance Reports
+          </h4>
+          <button type="button" class="btn btn-primary btn-sm" (click)="toggleGenerateForm()">
+            <i class="ph-plus"></i> {{ showGenerateForm ? 'Cancel' : 'Generate Report' }}
+          </button>
+        </div>
+
+        <div class="card-body">
+          <!-- Generate Form -->
+          <div *ngIf="showGenerateForm" class="card mb-4 bg-light">
+            <div class="card-body">
+              <h5 class="mb-3">Generate New Report</h5>
+              <form [formGroup]="generateForm">
+                <div class="row">
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Report Type <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="reportType"
+                            [class.is-invalid]="generateForm.get('reportType')?.invalid && generateForm.get('reportType')?.touched">
+                      <option value="">Select type...</option>
+                      <option *ngFor="let type of reportTypes" [value]="type">{{ type }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="startDate"
+                           [class.is-invalid]="generateForm.get('startDate')?.invalid && generateForm.get('startDate')?.touched">
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">End Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="endDate"
+                           [class.is-invalid]="generateForm.get('endDate')?.invalid && generateForm.get('endDate')?.touched">
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" formControlName="department" 
+                           placeholder="Optional">
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" (click)="generateReport()"
+                        [disabled]="isGenerating || generateForm.invalid">
+                  <i class="ph-file-arrow-down"></i> 
+                  {{ isGenerating ? 'Generating...' : 'Generate Report' }}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <form [formGroup]="filterForm">
+            <div class="row mb-4">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" formControlName="reportType">
+                  <option value="">All Types</option>
+                  <option *ngFor="let type of reportTypes" [value]="type">{{ type }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="">All Statuses</option>
+                  <option *ngFor="let status of reportStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" formControlName="endDate">
+              </div>
+
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-primary w-100 me-1" (click)="applyFilters()">
+                  <i class="ph-funnel"></i> Apply
+                </button>
+              </div>
+
+              <div class="col-md-1 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                  <i class="ph-x"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Reports List -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Report Type</th>
+                  <th>Period</th>
+                  <th>Generated</th>
+                  <th>By</th>
+                  <th>Compliance Score</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="reports.length === 0 && !isLoading">
+                  <td colspan="7" class="text-center text-muted py-4">
+                    No compliance reports found
+                  </td>
+                </tr>
+                <tr *ngFor="let report of reports">
+                  <td>
+                    <strong>{{ report.reportType }}</strong>
+                    <br>
+                    <small class="text-muted" *ngIf="report.department">{{ report.department }}</small>
+                  </td>
+                  <td>
+                    {{ report.startDate | date:'dd/MM/yyyy' }}
+                    <br>
+                    <small>to</small>
+                    <br>
+                    {{ report.endDate | date:'dd/MM/yyyy' }}
+                  </td>
+                  <td>
+                    {{ report.generatedDate | date:'dd/MM/yyyy' }}
+                    <br>
+                    <small class="text-muted">{{ report.generatedDate | date:'hh:mm a' }}</small>
+                  </td>
+                  <td>{{ report.generatedBy }}</td>
+                  <td>
+                    <h5 class="mb-0" [ngClass]="getComplianceScoreClass(report.summary.complianceScore)">
+                      {{ report.summary.complianceScore }}%
+                    </h5>
+                    <small class="text-muted">
+                      {{ report.summary.criticalIssues }} critical
+                    </small>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(report.status)">
+                      {{ report.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-primary" 
+                              (click)="viewReport(report)"
+                              title="View Report">
+                        <i class="ph-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-success" 
+                              (click)="downloadReport(report, 'PDF')"
+                              title="Download PDF">
+                        <i class="ph-file-pdf"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-info" 
+                              (click)="downloadReport(report, 'EXCEL')"
+                              title="Download Excel">
+                        <i class="ph-file-xls"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-success" 
+                              *ngIf="report.status === 'Pending Review'"
+                              (click)="approveReport(report)"
+                              title="Approve">
+                        <i class="ph-check"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger" 
+                              *ngIf="report.status === 'Pending Review'"
+                              (click)="rejectReport(report)"
+                              title="Reject">
+                        <i class="ph-x"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

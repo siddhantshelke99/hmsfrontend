@@ -1,0 +1,357 @@
+<div class="container-fluid py-4">
+  <app-loader *ngIf="isLoading"></app-loader>
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="mb-0">{{ getReportTitle() }}</h2>
+      <p class="text-muted">Prescription analytics and medicine consumption</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" (click)="refreshReport()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer"></i> Print
+        </button>
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download"></i> Export
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.PDF)">Export as PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.EXCEL)">Export as Excel</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.CSV)">Export as CSV</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Type Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'PRESCRIPTIONS'" (click)="switchReport('PRESCRIPTIONS')">
+        <i class="bi bi-file-medical"></i> Prescriptions
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'DOCTOR_WISE'" (click)="switchReport('DOCTOR_WISE')">
+        <i class="bi bi-person-badge"></i> Doctor-wise
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'CONSUMPTION'" (click)="switchReport('CONSUMPTION')">
+        <i class="bi bi-graph-up"></i> Consumption
+      </a>
+    </li>
+  </ul>
+
+  <!-- Prescription Report -->
+  <div *ngIf="currentReport === 'PRESCRIPTIONS' && prescriptionReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" formControlName="startDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" class="form-control" formControlName="endDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Department (Optional)</label>
+            <input type="text" class="form-control" formControlName="department" placeholder="e.g., Cardiology">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadPrescriptionReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Prescriptions</h6>
+                <h3 class="mb-0">{{ prescriptionReport.totalPrescriptions }}</h3>
+                <small class="text-muted">
+                  {{ prescriptionReport.startDate | date:'dd/MM/yyyy' }} - {{ prescriptionReport.endDate | date:'dd/MM/yyyy' }}
+                </small>
+              </div>
+              <div class="stat-icon bg-primary">
+                <i class="bi bi-file-medical"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Doctors</h6>
+                <h3 class="mb-0">{{ prescriptionReport.byDoctor.length }}</h3>
+                <small class="text-muted">Active prescribers</small>
+              </div>
+              <div class="stat-icon bg-success">
+                <i class="bi bi-person-badge"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Medicines</h6>
+                <h3 class="mb-0">
+                  {{ getTotalMedicineCount() }}
+                </h3>
+                <small class="text-muted">Prescribed items</small>
+              </div>
+              <div class="stat-icon bg-info">
+                <i class="bi bi-capsule"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prescriptions Table -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Prescription Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Prescription #</th>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Doctor</th>
+                <th>Department</th>
+                <th class="text-center">Medicines</th>
+                <th class="text-center">Total Qty</th>
+                <th>Status</th>
+                <th>Dispensed Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of prescriptionReport.prescriptions; trackBy: trackByPrescriptionId">
+                <td>
+                  <strong>{{ item.prescriptionNumber }}</strong>
+                  <small class="d-block text-muted">{{ item.prescriptionId }}</small>
+                </td>
+                <td>{{ item.prescriptionDate | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <strong>{{ item.patientName }}</strong>
+                  <small class="d-block text-muted">{{ item.patientId }}</small>
+                </td>
+                <td>{{ item.doctorName }}</td>
+                <td>{{ item.department }}</td>
+                <td class="text-center">{{ item.medicineCount }}</td>
+                <td class="text-center">{{ item.totalQuantity }}</td>
+                <td>
+                  <span [class]="getDispensingStatusClass(item.dispensingStatus)">
+                    {{ item.dispensingStatus }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="item.dispensedDate">{{ item.dispensedDate | date:'dd/MM/yyyy' }}</span>
+                  <span *ngIf="!item.dispensedDate" class="text-muted">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Doctor-wise Report -->
+  <div *ngIf="currentReport === 'DOCTOR_WISE' && prescriptionReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" formControlName="startDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" class="form-control" formControlName="endDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Doctor ID (Optional)</label>
+            <input type="text" class="form-control" formControlName="doctorId" placeholder="Filter by doctor">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadDoctorWiseReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Doctor Summary Cards -->
+    <div class="row">
+      <div class="col-md-4 mb-4" *ngFor="let doctor of prescriptionReport.byDoctor; trackBy: trackByDoctorId">
+        <div class="card doctor-card h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="doctor-avatar">
+                <i class="bi bi-person-circle"></i>
+              </div>
+              <div class="ms-3">
+                <h5 class="mb-0">{{ doctor.doctorName }}</h5>
+                <small class="text-muted">{{ doctor.department }}</small>
+              </div>
+            </div>
+
+            <div class="doctor-stats">
+              <div class="stat-row">
+                <span class="stat-label">Total Prescriptions</span>
+                <span class="stat-value">{{ doctor.totalPrescriptions }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Total Medicines</span>
+                <span class="stat-value">{{ doctor.totalMedicines }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Avg Medicines/Rx</span>
+                <span class="stat-value">{{ doctor.averageMedicinesPerPrescription.toFixed(1) }}</span>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <h6 class="text-muted mb-2">Most Prescribed</h6>
+              <div class="medicine-list">
+                <div class="medicine-item" *ngFor="let med of doctor.mostPrescribedMedicines.slice(0, 3); trackBy: trackByMedicine">
+                  <span class="medicine-name">{{ med.medicine }}</span>
+                  <span class="badge bg-primary">{{ med.count }}x</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medicine Consumption Report -->
+  <div *ngIf="currentReport === 'CONSUMPTION' && consumptionReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" formControlName="startDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" class="form-control" formControlName="endDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Department (Optional)</label>
+            <input type="text" class="form-control" formControlName="department" placeholder="e.g., Cardiology">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadConsumptionReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Top Consumed Medicines -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Top 10 Consumed Medicines</h5>
+      </div>
+      <div class="card-body">
+        <div class="consumption-chart">
+          <div class="chart-item" *ngFor="let item of consumptionReport.topConsumed.slice(0, 10); let i = index; trackBy: trackByMedicineId">
+            <div class="chart-label">
+              <span class="rank">{{ i + 1 }}</span>
+              <span class="medicine-name">{{ item.medicineName }}</span>
+            </div>
+            <div class="chart-bar-container">
+              <div class="chart-bar" 
+                   [style.width.%]="(item.totalQuantity / consumptionReport.topConsumed[0].totalQuantity) * 100">
+              </div>
+            </div>
+            <div class="chart-value">
+              {{ item.totalQuantity }} units
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consumption Table -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Medicine Consumption Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Category</th>
+                <th class="text-end">Total Quantity</th>
+                <th class="text-center">Prescriptions</th>
+                <th class="text-end">Total Value</th>
+                <th class="text-end">Avg/Prescription</th>
+                <th class="text-center">Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of consumptionReport.medicines; trackBy: trackByMedicineId">
+                <td>
+                  <strong>{{ item.medicineName }}</strong>
+                  <small class="d-block text-muted">{{ item.medicineId }}</small>
+                </td>
+                <td>{{ item.category }}</td>
+                <td class="text-end">{{ item.totalQuantity }}</td>
+                <td class="text-center">{{ item.totalPrescriptions }}</td>
+                <td class="text-end">₹{{ item.totalValue.toLocaleString() }}</td>
+                <td class="text-end">{{ item.averagePerPrescription.toFixed(1) }}</td>
+                <td class="text-center">
+                  <span [class]="getTrendClass(item.trend)">
+                    <i [class]="getTrendIcon(item.trend)"></i>
+                    {{ item.trend }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

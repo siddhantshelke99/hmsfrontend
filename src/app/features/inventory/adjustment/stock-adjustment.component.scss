@@ -1,0 +1,27 @@
+.summary-item {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.form-control[readonly],
+.form-control.bg-light {
+  background-color: #e9ecef !important;
+  cursor: not-allowed;
+}
+
+.card-header {
+  h5 {
+    margin-bottom: 0;
+  }
+}
+
+.form-check-label {
+  cursor: pointer;
+}

@@ -1,0 +1,271 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Dashboard Metrics -->
+    <div class="col-12 mb-4">
+      <div class="row">
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="stat-card bg-danger">
+            <div class="stat-icon"><i class="ph-warning-circle"></i></div>
+            <div class="stat-content">
+              <h3 class="mb-0">{{ dashboardMetrics.newAlerts }}</h3>
+              <p class="mb-0">New Alerts</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="stat-card bg-warning">
+            <div class="stat-icon"><i class="ph-fire"></i></div>
+            <div class="stat-content">
+              <h3 class="mb-0">{{ dashboardMetrics.criticalAlerts }}</h3>
+              <p class="mb-0">Critical Alerts</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="stat-card bg-info">
+            <div class="stat-icon"><i class="ph-magnifying-glass"></i></div>
+            <div class="stat-content">
+              <h3 class="mb-0">{{ dashboardMetrics.openInvestigations }}</h3>
+              <p class="mb-0">Open Investigations</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="stat-card bg-success">
+            <div class="stat-icon"><i class="ph-check-circle"></i></div>
+            <div class="stat-content">
+              <h3 class="mb-0">{{ dashboardMetrics.resolvedToday }}</h3>
+              <p class="mb-0">Resolved Today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Investigations -->
+    <div class="col-12 mb-4" *ngIf="activeInvestigations.length > 0">
+      <div class="card border-warning">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="ph-detective"></i> Active Investigations ({{ activeInvestigations.length }})
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-2" *ngFor="let investigation of activeInvestigations">
+              <div class="investigation-card">
+                <h6>{{ investigation.alertId }}</h6>
+                <p class="mb-1">
+                  <strong>Investigator:</strong> {{ investigation.investigator }}
+                </p>
+                <p class="mb-1">
+                  <strong>Status:</strong> 
+                  <span [ngClass]="getInvestigationStatusClass(investigation.status)">
+                    {{ investigation.status }}
+                  </span>
+                </p>
+                <p class="mb-0">
+                  <small class="text-muted">Started: {{ investigation.startedDate | date:'dd/MM/yyyy' }}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Alerts Table -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-shield-warning"></i> Theft & Discrepancy Alerts
+          </h4>
+          <span class="badge bg-danger">{{ alerts.length }} Alerts</span>
+        </div>
+
+        <div class="card-body">
+          <!-- Filters -->
+          <form [formGroup]="filterForm">
+            <div class="row mb-4">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" formControlName="searchTerm" 
+                       placeholder="Search alerts...">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Alert Type</label>
+                <select class="form-select" formControlName="alertType">
+                  <option value="">All Types</option>
+                  <option *ngFor="let type of alertTypes" [value]="type">{{ type }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="">All Statuses</option>
+                  <option *ngFor="let status of alertStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Severity</label>
+                <select class="form-select" formControlName="severity">
+                  <option value="">All</option>
+                  <option *ngFor="let severity of alertSeverities" [value]="severity">{{ severity }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" formControlName="endDate">
+              </div>
+
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-primary w-100 me-1" (click)="applyFilters()">
+                  <i class="ph-funnel"></i> Apply
+                </button>
+              </div>
+
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                  <i class="ph-x"></i> Clear
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Alerts Table -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Alert ID</th>
+                  <th>Type</th>
+                  <th>Medicine</th>
+                  <th>Discrepancy</th>
+                  <th>Value</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Detected</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="alerts.length === 0 && !isLoading">
+                  <td colspan="9" class="text-center text-muted py-4">
+                    No theft alerts found
+                  </td>
+                </tr>
+                <tr *ngFor="let alert of alerts" [class.table-danger]="alert.severity === 'Critical'">
+                  <td>
+                    <strong>{{ alert.id }}</strong>
+                    <br>
+                    <small class="text-muted" *ngIf="alert.location">{{ alert.location }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ alert.alertType }}</span>
+                    <br>
+                    <small class="text-muted">{{ alert.discrepancyType }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ alert.medicineName || 'N/A' }}</strong>
+                    <br>
+                    <small class="text-muted" *ngIf="alert.department">{{ alert.department }}</small>
+                  </td>
+                  <td>
+                    <div class="discrepancy-info">
+                      <p class="mb-0"><small>Expected: {{ alert.expectedQuantity }}</small></p>
+                      <p class="mb-0"><small>Actual: {{ alert.actualQuantity }}</small></p>
+                      <p class="mb-0 text-danger"><strong>Diff: {{ alert.discrepancyQuantity }}</strong></p>
+                    </div>
+                  </td>
+                  <td>
+                    <strong class="text-danger">₹{{ alert.estimatedValue.toFixed(2) }}</strong>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getSeverityBadgeClass(alert.severity)">
+                      {{ alert.severity }}
+                    </span>
+                    <div *ngIf="alert.escalated" class="mt-1">
+                      <span class="badge bg-danger"><i class="ph-arrow-up"></i> Level {{ alert.escalationLevel }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(alert.status)">
+                      {{ alert.status }}
+                    </span>
+                    <div *ngIf="alert.assignedTo" class="mt-1">
+                      <small class="text-muted">Assigned: {{ alert.assignedTo }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    {{ alert.detectedDate | date:'dd/MM/yyyy' }}
+                    <br>
+                    <small class="text-muted">{{ alert.detectedDate | date:'hh:mm a' }}</small>
+                    <br>
+                    <small class="text-muted">By: {{ alert.detectedBy }}</small>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-primary" 
+                              (click)="viewAlertDetails(alert)"
+                              title="View Details">
+                        <i class="ph-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-info" 
+                              *ngIf="alert.status === 'New'"
+                              (click)="acknowledgeAlert(alert)"
+                              title="Acknowledge">
+                        <i class="ph-check"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" 
+                              *ngIf="!alert.assignedTo"
+                              (click)="assignAlert(alert)"
+                              title="Assign">
+                        <i class="ph-user-plus"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-warning" 
+                              *ngIf="alert.status !== 'Investigating' && alert.status !== 'Resolved'"
+                              (click)="escalateAlert(alert)"
+                              title="Escalate">
+                        <i class="ph-arrow-up"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger" 
+                              *ngIf="!alert.investigation && alert.status !== 'Resolved'"
+                              (click)="startInvestigation(alert)"
+                              title="Investigate">
+                        <i class="ph-magnifying-glass"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-success" 
+                              *ngIf="alert.status !== 'Resolved' && alert.status !== 'False Alarm'"
+                              (click)="resolveAlert(alert)"
+                              title="Resolve">
+                        <i class="ph-check-circle"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" 
+                              *ngIf="alert.status !== 'Resolved' && alert.status !== 'False Alarm'"
+                              (click)="markAsFalseAlarm(alert)"
+                              title="False Alarm">
+                        <i class="ph-x-circle"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

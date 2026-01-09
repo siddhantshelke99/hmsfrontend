@@ -1,0 +1,309 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Pharmacy Dashboard</h2>
+      <p class="text-muted mb-0">Dispensing Queue & Stock Alerts</p>
+    </div>
+    <div class="text-end">
+      <button class="btn btn-outline-primary btn-sm" (click)="refreshDashboard()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <small class="d-block text-muted mt-2">
+        Last updated: {{ lastUpdated | date:'short' }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <app-loader *ngIf="isLoading" message="Loading dashboard..." [overlay]="false"></app-loader>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && dashboardData">
+    
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-warning">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Pending</p>
+                <h2 class="mb-0 text-warning">{{ dashboardData.pendingDispensing }}</h2>
+              </div>
+              <div class="stat-icon bg-warning-subtle">
+                <i class="bi bi-hourglass-split text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-success">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Today Dispensed</p>
+                <h2 class="mb-0 text-success">{{ dashboardData.todayDispensed }}</h2>
+              </div>
+              <div class="stat-icon bg-success-subtle">
+                <i class="bi bi-check-circle-fill text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-info">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Partial Dispenses</p>
+                <h2 class="mb-0 text-info">{{ dashboardData.partialDispenses }}</h2>
+              </div>
+              <div class="stat-icon bg-info-subtle">
+                <i class="bi bi-pie-chart-fill text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card stat-card border-danger">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1">Returns Today</p>
+                <h2 class="mb-0 text-danger">{{ dashboardData.returnsToday }}</h2>
+              </div>
+              <div class="stat-icon bg-danger-subtle">
+                <i class="bi bi-arrow-return-left text-danger"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dispensing Queue -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-list-task me-2"></i>
+              Dispensing Queue ({{ dashboardData.dispensingQueue.length }})
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Prescription No</th>
+                    <th>Patient Name</th>
+                    <th>Doctor</th>
+                    <th>Medicines</th>
+                    <th>Created</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of dashboardData.dispensingQueue"
+                      [class.table-info]="item.status === 'IN_PROGRESS'"
+                      [class.table-danger]="item.priority === 'URGENT'">
+                    <td><strong>{{ item.prescriptionNumber }}</strong></td>
+                    <td>{{ item.patientName }}</td>
+                    <td><small class="text-muted">{{ item.doctorName }}</small></td>
+                    <td>
+                      <span class="badge bg-info">{{ item.medicineCount }} items</span>
+                    </td>
+                    <td>
+                      <small>{{ item.createdAt | date:'short' }}</small>
+                    </td>
+                    <td>
+                      <span class="badge" [class]="getPriorityBadge(item.priority)">
+                        {{ item.priority }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [class]="getStatusBadge(item.status)">
+                        {{ item.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-primary" 
+                              (click)="startDispensing(item)"
+                              [disabled]="item.status === 'IN_PROGRESS'">
+                        <i class="bi bi-play-fill"></i>
+                        {{ item.status === 'IN_PROGRESS' ? 'In Progress' : 'Start' }}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="dashboardData.dispensingQueue.length === 0">
+                    <td colspan="8" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                      No items in dispensing queue
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/pharmacy/dispense" class="btn btn-sm btn-outline-primary">
+              View All <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts Row -->
+    <div class="row g-3 mb-4">
+      <!-- Low Stock Alerts -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Low Stock Alerts ({{ dashboardData.lowStockAlerts.length }})
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+              <div *ngFor="let alert of dashboardData.lowStockAlerts" 
+                   class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1">
+                      {{ alert.medicineName }}
+                      <span class="badge bg-danger ms-2" *ngIf="alert.isNarcotic">Narcotic</span>
+                    </h6>
+                    <small class="text-muted d-block mb-1">{{ alert.category }}</small>
+                    <div class="d-flex gap-3">
+                      <span class="text-danger">
+                        <strong>Current:</strong> {{ alert.currentStock }}
+                      </span>
+                      <span class="text-muted">
+                        <strong>Min Level:</strong> {{ alert.minimumLevel }}
+                      </span>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-outline-primary" 
+                          [routerLink]="['/inventory/stock', alert.medicineId]">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="dashboardData.lowStockAlerts.length === 0" class="text-center text-muted py-4">
+                <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                No low stock alerts
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/inventory/stock?filter=low" class="btn btn-sm btn-outline-warning">
+              View All <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expiring Medicines -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-clock-fill me-2"></i>
+              Expiring Medicines ({{ dashboardData.expiringMedicines.length }})
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+              <div *ngFor="let item of dashboardData.expiringMedicines" 
+                   class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1">{{ item.medicineName }}</h6>
+                    <small class="text-muted d-block mb-1">
+                      <strong>Batch:</strong> {{ item.batchNumber }} | <strong>Qty:</strong> {{ item.quantity }}
+                    </small>
+                    <small class="text-muted d-block mb-1">
+                      <strong>Location:</strong> {{ item.location }}
+                    </small>
+                    <div class="d-flex gap-3 align-items-center">
+                      <span class="text-danger">
+                        <strong>Expires:</strong> {{ item.expiryDate | date:'dd/MM/yyyy' }}
+                      </span>
+                      <span [class]="getDaysRemainingColor(item.daysRemaining)">
+                        <i class="bi bi-clock me-1"></i>{{ item.daysRemaining }} days left
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="dashboardData.expiringMedicines.length === 0" class="text-center text-muted py-4">
+                <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                No expiring medicines
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/inventory/stock?filter=expiring" class="btn btn-sm btn-outline-danger">
+              View All <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Statistics -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-graph-up me-2"></i>
+              Today's Statistics
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="stat-item text-center">
+                  <h3 class="text-success mb-1">{{ dashboardData.todayStatistics.totalDispensedToday }}</h3>
+                  <p class="text-muted mb-0">Total Dispensed</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-item text-center">
+                  <h3 class="text-info mb-1">₹{{ formatCurrency(dashboardData.todayStatistics.totalValueToday) }}</h3>
+                  <p class="text-muted mb-0">Total Value</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-item text-center">
+                  <h3 class="text-primary mb-1">{{ dashboardData.todayStatistics.averageDispenseTime }} min</h3>
+                  <p class="text-muted mb-0">Avg. Dispense Time</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-item text-center">
+                  <p class="text-muted mb-1">Most Dispensed</p>
+                  <span class="badge bg-secondary">{{ dashboardData.todayStatistics.mostDispensedMedicine }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

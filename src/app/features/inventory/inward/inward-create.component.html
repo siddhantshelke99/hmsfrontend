@@ -1,0 +1,184 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Create Inward Entry</h2>
+      <p class="text-muted mb-0">Add new medicine stock inward entry</p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i> Back to List
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="inwardForm" (ngSubmit)="onSubmit()">
+    
+    <!-- Basic Information -->
+    <div class="card mb-3">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Basic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Entry Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="entryNumber" placeholder="INW-001">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Entry Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="entryDate">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Supplier <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="supplierId">
+              <option value="">Select Supplier</option>
+              <option *ngFor="let supplier of suppliers" [value]="supplier.id">
+                {{ supplier.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoice Details -->
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Invoice Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Invoice Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="invoiceNumber">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Invoice Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="invoiceDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Challan Number</label>
+            <input type="text" class="form-control" formControlName="challanNumber">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">PO Number</label>
+            <input type="text" class="form-control" formControlName="purchaseOrderNumber">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Remarks</label>
+            <textarea class="form-control" formControlName="remarks" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="card mb-3">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Items ({{ items.length }})</h5>
+        <button type="button" class="btn btn-sm btn-primary" (click)="addItem()">
+          <i class="bi bi-plus-circle"></i> Add Item
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 200px;">Medicine <span class="text-danger">*</span></th>
+                <th style="width: 120px;">Batch <span class="text-danger">*</span></th>
+                <th style="width: 130px;">Mfg Date <span class="text-danger">*</span></th>
+                <th style="width: 130px;">Exp Date <span class="text-danger">*</span></th>
+                <th style="width: 80px;">Qty <span class="text-danger">*</span></th>
+                <th style="width: 80px;">Free</th>
+                <th style="width: 100px;">Price <span class="text-danger">*</span></th>
+                <th style="width: 100px;">MRP <span class="text-danger">*</span></th>
+                <th style="width: 80px;">GST %</th>
+                <th style="width: 100px;">Total</th>
+                <th style="width: 120px;">Location <span class="text-danger">*</span></th>
+                <th style="width: 60px;"></th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <app-medicine-search
+                    [placeholder]="'Search medicine'"
+                    [showStockInfo]="false"
+                    [showAdvancedSearch]="false"
+                    (medicineSelected)="onMedicineSelected($event, i)">
+                  </app-medicine-search>
+                  <input type="hidden" formControlName="medicineId">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="batchNumber">
+                </td>
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="manufacturingDate">
+                </td>
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="expiryDate">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="quantity" 
+                         (change)="calculateItemTotal(i)">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="freeQuantity">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="purchasePrice" 
+                         (change)="calculateItemTotal(i)" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="mrp" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="gstRate" 
+                         (change)="calculateItemTotal(i)">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="totalAmount" readonly>
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="location">
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-sm btn-danger" (click)="removeItem(i)" 
+                          [disabled]="items.length === 1">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Amount -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-9 text-end">
+            <h5>Total Invoice Amount:</h5>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-primary">₹{{ inwardForm.get('invoiceAmount')?.value?.toLocaleString('en-IN') || 0 }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || inwardForm.invalid">
+        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!isSubmitting" class="bi bi-check-circle me-2"></i>
+        Create Inward Entry
+      </button>
+    </div>
+
+  </form>
+</div>

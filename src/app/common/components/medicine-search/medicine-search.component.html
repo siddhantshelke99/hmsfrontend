@@ -1,0 +1,173 @@
+<div class="medicine-search-wrapper">
+  <!-- Basic Search -->
+  <div class="search-input-group">
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-capsule"></i>
+      </span>
+      <input
+        type="text"
+        class="form-control"
+        [placeholder]="placeholder"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput($any($event.target).value)"
+        (blur)="closeDropdown()"
+        autocomplete="off"
+      />
+      <button 
+        class="btn btn-outline-secondary" 
+        type="button" 
+        *ngIf="searchTerm"
+        (click)="clearSelection()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <button 
+        class="btn btn-outline-primary" 
+        type="button" 
+        *ngIf="showAdvancedSearch"
+        (click)="toggleAdvancedSearch()">
+        <i class="bi bi-funnel"></i> Advanced
+      </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="search-loading" *ngIf="isSearching">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Searching...</span>
+      </div>
+    </div>
+
+    <!-- Search Results Dropdown -->
+    <div class="search-dropdown card shadow-sm" *ngIf="showDropdown && medicines.length > 0">
+      <ul class="list-group list-group-flush">
+        <li 
+          class="list-group-item list-group-item-action" 
+          *ngFor="let medicine of medicines"
+          (mousedown)="selectMedicine(medicine)">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <div class="fw-bold">{{ medicine.name }}</div>
+              <small class="text-muted d-block">{{ medicine.genericName }}</small>
+              <small class="text-muted">{{ medicine.strength }} | {{ medicine.manufacturer }}</small>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-primary">{{ medicine.category }}</span>
+              <span class="badge bg-danger ms-1" *ngIf="medicine.isNarcotic">Narcotic</span>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- No Results -->
+    <div class="search-dropdown card shadow-sm" *ngIf="showDropdown && medicines.length === 0 && searchTerm.length >= 2 && !isSearching">
+      <div class="card-body text-center text-muted">
+        <i class="bi bi-inbox fs-3"></i>
+        <p class="mb-0 mt-2">No medicines found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Information -->
+  <div class="card mt-3" *ngIf="selectedMedicine && showStockInfo && medicineStocks.length > 0">
+    <div class="card-header bg-light">
+      <strong>Available Stock Batches</strong>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Batch No</th>
+              <th>Quantity</th>
+              <th>Expiry Date</th>
+              <th>Location</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let stock of medicineStocks" 
+                [class.table-danger]="isExpired(stock.expiryDate)"
+                [class.table-warning]="isExpiringSoon(stock.expiryDate)">
+              <td>{{ stock.batchNumber }}</td>
+              <td>
+                <span class="badge" 
+                      [class.bg-success]="stock.quantity > 100"
+                      [class.bg-warning]="stock.quantity <= 100 && stock.quantity > 20"
+                      [class.bg-danger]="stock.quantity <= 20">
+                  {{ stock.quantity }}
+                </span>
+              </td>
+              <td>
+                {{ stock.expiryDate | date:'dd/MM/yyyy' }}
+                <span class="badge bg-danger ms-1" *ngIf="isExpired(stock.expiryDate)">Expired</span>
+                <span class="badge bg-warning ms-1" *ngIf="isExpiringSoon(stock.expiryDate)">Expiring Soon</span>
+              </td>
+              <td>{{ stock.location }} <span *ngIf="stock.rack">- {{ stock.rack }}</span></td>
+              <td>
+                <button 
+                  class="btn btn-sm btn-primary" 
+                  (click)="selectStock(stock)"
+                  [disabled]="isExpired(stock.expiryDate) || stock.quantity === 0">
+                  Select
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Search Panel -->
+  <div class="card mt-3" *ngIf="showAdvanced">
+    <div class="card-header bg-light">
+      <strong>Advanced Search</strong>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Medicine Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.name"
+            placeholder="Enter medicine name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Generic Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.genericName"
+            placeholder="Enter generic name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Category</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.category">
+            <option [ngValue]="undefined">All Categories</option>
+            <option *ngFor="let category of categories" [ngValue]="category">
+              {{ category }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Narcotic Status</label>
+          <select class="form-select" [(ngModel)]="advancedCriteria.isNarcotic">
+            <option [ngValue]="undefined">All</option>
+            <option [ngValue]="true">Narcotic Only</option>
+            <option [ngValue]="false">Non-Narcotic Only</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary" (click)="searchAdvanced()">
+          <i class="bi bi-search"></i> Search
+        </button>
+        <button class="btn btn-secondary" (click)="resetAdvancedSearch()">
+          <i class="bi bi-x-circle"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

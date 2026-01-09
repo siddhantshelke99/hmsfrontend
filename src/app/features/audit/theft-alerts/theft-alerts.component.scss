@@ -1,0 +1,200 @@
+.stat-card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  .stat-icon {
+    font-size: 3rem;
+    opacity: 0.8;
+    margin-right: 1rem;
+
+    i {
+      vertical-align: middle;
+    }
+  }
+
+  .stat-content {
+    flex: 1;
+
+    h3 {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+  }
+}
+
+.investigation-card {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+
+  h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+}
+
+.border-warning {
+  border-color: #ffc107 !important;
+  border-width: 2px;
+}
+
+.card-header {
+  h4, h5 {
+    color: #495057;
+    font-weight: 600;
+
+    i {
+      font-size: 1.25rem;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+  }
+
+  &.bg-warning {
+    h5 {
+      color: #000;
+    }
+  }
+
+  .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.form-control,
+.form-select {
+  font-size: 0.875rem;
+
+  &:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+}
+
+.table {
+  font-size: 0.875rem;
+
+  thead {
+    th {
+      font-weight: 600;
+      color: #495057;
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      padding: 0.75rem;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
+
+      &.table-danger {
+        background-color: #f8d7da;
+
+        &:hover {
+          background-color: #f5c2c7;
+        }
+      }
+
+      td {
+        padding: 0.75rem;
+        vertical-align: middle;
+
+        strong {
+          color: #495057;
+        }
+
+        small {
+          display: block;
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+}
+
+.discrepancy-info {
+  p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  small {
+    font-size: 0.75rem;
+  }
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  font-weight: 500;
+
+  i {
+    font-size: 0.875rem;
+    vertical-align: middle;
+  }
+}
+
+.btn-group-sm {
+  .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.text-secondary {
+  color: #6c757d !important;
+}

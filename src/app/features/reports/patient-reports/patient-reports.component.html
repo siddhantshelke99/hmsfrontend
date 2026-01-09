@@ -1,0 +1,463 @@
+<div class="container-fluid py-4">
+  <app-loader *ngIf="isLoading"></app-loader>
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="mb-0">{{ getReportTitle() }}</h2>
+      <p class="text-muted">Patient analytics and load management</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" (click)="refreshReport()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer"></i> Print
+        </button>
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download"></i> Export
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.PDF)">Export as PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.EXCEL)">Export as Excel</a></li>
+            <li><a class="dropdown-item" (click)="exportReport(ReportFormat.CSV)">Export as CSV</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Type Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'PATIENT_STATISTICS'" (click)="switchReport('PATIENT_STATISTICS')">
+        <i class="bi bi-people"></i> Patient Statistics
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'PATIENT_LOAD'" (click)="switchReport('PATIENT_LOAD')">
+        <i class="bi bi-graph-up"></i> Patient Load
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="currentReport === 'DEMOGRAPHICS'" (click)="switchReport('DEMOGRAPHICS')">
+        <i class="bi bi-pie-chart"></i> Demographics
+      </a>
+    </li>
+  </ul>
+
+  <!-- Patient Statistics Report -->
+  <div *ngIf="currentReport === 'PATIENT_STATISTICS' && patientReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" formControlName="startDate">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">End Date</label>
+            <input type="date" class="form-control" formControlName="endDate">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadPatientReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Patients</h6>
+                <h3 class="mb-0">{{ patientReport.totalPatients }}</h3>
+                <small class="text-muted">
+                  {{ patientReport.startDate | date:'dd/MM/yyyy' }} - {{ patientReport.endDate | date:'dd/MM/yyyy' }}
+                </small>
+              </div>
+              <div class="stat-icon bg-primary">
+                <i class="bi bi-people"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">New Patients</h6>
+                <h3 class="mb-0 text-success">{{ patientReport.newPatients }}</h3>
+                <small class="text-muted">First-time visits</small>
+              </div>
+              <div class="stat-icon bg-success">
+                <i class="bi bi-person-plus"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Returning Patients</h6>
+                <h3 class="mb-0 text-info">{{ patientReport.returningPatients }}</h3>
+                <small class="text-muted">Follow-up visits</small>
+              </div>
+              <div class="stat-icon bg-info">
+                <i class="bi bi-arrow-repeat"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Department-wise Statistics -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Department-wise Patient Distribution</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th class="text-center">Total Patients</th>
+                <th class="text-center">New Patients</th>
+                <th class="text-end">Avg Visits/Patient</th>
+                <th>Common Diagnoses</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dept of patientReport.byDepartment">
+                <td><strong>{{ dept.department }}</strong></td>
+                <td class="text-center">{{ dept.patientCount }}</td>
+                <td class="text-center">{{ dept.newPatients }}</td>
+                <td class="text-end">{{ dept.averageVisitsPerPatient.toFixed(2) }}</td>
+                <td>
+                  <div class="diagnosis-list">
+                    <span class="badge bg-light text-dark me-1" *ngFor="let diagnosis of dept.commonDiagnoses.slice(0, 3)">
+                      {{ diagnosis }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Age Group Distribution -->
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Age Group Distribution</h5>
+          </div>
+          <div class="card-body">
+            <div class="age-group-item" *ngFor="let group of patientReport.byAgeGroup">
+              <div class="age-group-header">
+                <span class="age-group-label">{{ group.ageGroup }}</span>
+                <span class="age-group-count">{{ group.patientCount }} ({{ group.percentage.toFixed(1) }}%)</span>
+              </div>
+              <div class="progress mb-3" style="height: 25px;">
+                <div class="progress-bar" 
+                     [style.width.%]="group.percentage"
+                     [attr.aria-valuenow]="group.percentage">
+                  {{ group.percentage.toFixed(1) }}%
+                </div>
+              </div>
+              <div class="common-conditions">
+                <small class="text-muted">Common conditions:</small>
+                <span class="badge bg-light text-dark ms-1" *ngFor="let condition of group.commonConditions.slice(0, 3)">
+                  {{ condition }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gender Distribution -->
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Gender Distribution</h5>
+          </div>
+          <div class="card-body">
+            <div class="gender-stats">
+              <div class="gender-item">
+                <div class="gender-icon male">
+                  <i class="bi bi-gender-male"></i>
+                </div>
+                <div class="gender-info">
+                  <h3>{{ patientReport.byGender.male }}</h3>
+                  <p class="text-muted mb-0">Male ({{ patientReport.byGender.malePercentage.toFixed(1) }}%)</p>
+                </div>
+              </div>
+
+              <div class="gender-item">
+                <div class="gender-icon female">
+                  <i class="bi bi-gender-female"></i>
+                </div>
+                <div class="gender-info">
+                  <h3>{{ patientReport.byGender.female }}</h3>
+                  <p class="text-muted mb-0">Female ({{ patientReport.byGender.femalePercentage.toFixed(1) }}%)</p>
+                </div>
+              </div>
+
+              <div class="gender-item" *ngIf="patientReport.byGender.other > 0">
+                <div class="gender-icon other">
+                  <i class="bi bi-gender-ambiguous"></i>
+                </div>
+                <div class="gender-info">
+                  <h3>{{ patientReport.byGender.other }}</h3>
+                  <p class="text-muted mb-0">Other ({{ patientReport.byGender.otherPercentage.toFixed(1) }}%)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Load Report -->
+  <div *ngIf="currentReport === 'PATIENT_LOAD' && patientLoadReport">
+    <!-- Report Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form [formGroup]="reportForm" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Report Date</label>
+            <input type="date" class="form-control" formControlName="loadDate">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary d-block" (click)="loadPatientLoadReport()">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Total Tokens</h6>
+                <h3 class="mb-0">{{ patientLoadReport.totalTokens }}</h3>
+              </div>
+              <div class="stat-icon bg-primary">
+                <i class="bi bi-receipt"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Avg Wait Time</h6>
+                <h3 class="mb-0">{{ patientLoadReport.averageWaitTime }}</h3>
+                <small class="text-muted">minutes</small>
+              </div>
+              <div class="stat-icon bg-warning">
+                <i class="bi bi-clock"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Peak Hours</h6>
+                <h3 class="mb-0">{{ patientLoadReport.peakHours.length }}</h3>
+                <small class="text-muted">hours identified</small>
+              </div>
+              <div class="stat-icon bg-danger">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-2">Peak Time</h6>
+                <h3 class="mb-0">{{ patientLoadReport.peakHours[0] }}</h3>
+                <small class="text-muted">busiest hour</small>
+              </div>
+              <div class="stat-icon bg-info">
+                <i class="bi bi-alarm"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Load Chart -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Hourly Patient Load</h5>
+      </div>
+      <div class="card-body">
+        <div class="hourly-chart">
+          <div class="chart-row" *ngFor="let hour of patientLoadReport.byHour">
+            <div class="hour-label">{{ hour.hour }}</div>
+            <div class="hour-bar-container">
+              <div class="hour-bar" 
+                   [style.width.%]="(hour.patientCount / getMaxHourlyPatients()) * 100"
+                   [class.peak-hour]="isPeakHour(hour.hour.toString())">
+              </div>
+            </div>
+            <div class="hour-stats">
+              <span class="patients">{{ hour.patientCount }} patients</span>
+              <span class="wait-time" [class]="getLoadClass(hour.averageWaitTime / 60 * 100)">
+                {{ hour.averageWaitTime }} min wait
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Department Load -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Department-wise Load</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th class="text-center">Patient Count</th>
+                <th class="text-center">Avg Wait Time</th>
+                <th class="text-center">Doctors Available</th>
+                <th class="text-center">Utilization Rate</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dept of patientLoadReport.byDepartment">
+                <td><strong>{{ dept.department }}</strong></td>
+                <td class="text-center">{{ dept.patientCount }}</td>
+                <td class="text-center" [class]="getLoadClass(dept.averageWaitTime / 60 * 100)">
+                  {{ dept.averageWaitTime }} min
+                </td>
+                <td class="text-center">{{ dept.doctorsAvailable }}</td>
+                <td class="text-center" [class]="getLoadClass(dept.utilizationRate)">
+                  {{ dept.utilizationRate.toFixed(1) }}%
+                </td>
+                <td class="text-center">
+                  <span [class]="getLoadBadgeClass(dept.utilizationRate)">
+                    {{ dept.utilizationRate >= 90 ? 'Critical' : dept.utilizationRate >= 75 ? 'High' : 'Normal' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demographics Report (uses patientReport data) -->
+  <div *ngIf="currentReport === 'DEMOGRAPHICS' && patientReport">
+    <div class="row">
+      <!-- Age Distribution -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Age Distribution Analysis</h5>
+          </div>
+          <div class="card-body">
+            <div class="demographics-chart">
+              <div class="demo-item" *ngFor="let group of patientReport.byAgeGroup">
+                <div class="demo-label">
+                  <strong>{{ group.ageGroup }}</strong>
+                  <span class="text-muted">{{ group.patientCount }} patients</span>
+                </div>
+                <div class="progress" style="height: 30px;">
+                  <div class="progress-bar bg-primary" 
+                       [style.width.%]="group.percentage"
+                       [attr.aria-valuenow]="group.percentage">
+                    {{ group.percentage.toFixed(1) }}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gender & Department Distribution -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Gender & Department Analysis</h5>
+          </div>
+          <div class="card-body">
+            <!-- Gender Pie Chart Visual -->
+            <div class="gender-distribution mb-4">
+              <h6 class="text-muted mb-3">Gender Distribution</h6>
+              <div class="pie-chart-simple">
+                <div class="pie-segment male" [style.width.%]="patientReport.byGender.malePercentage">
+                  <span>Male {{ patientReport.byGender.malePercentage.toFixed(1) }}%</span>
+                </div>
+                <div class="pie-segment female" [style.width.%]="patientReport.byGender.femalePercentage">
+                  <span>Female {{ patientReport.byGender.femalePercentage.toFixed(1) }}%</span>
+                </div>
+                <div class="pie-segment other" [style.width.%]="patientReport.byGender.otherPercentage" *ngIf="patientReport.byGender.otherPercentage > 0">
+                  <span>Other {{ patientReport.byGender.otherPercentage.toFixed(1) }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Departments -->
+            <div class="top-departments">
+              <h6 class="text-muted mb-3">Top Departments</h6>
+              <div class="dept-item" *ngFor="let dept of patientReport.byDepartment.slice(0, 5)">
+                <div class="dept-info">
+                  <strong>{{ dept.department }}</strong>
+                  <span class="badge bg-primary ms-2">{{ dept.patientCount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

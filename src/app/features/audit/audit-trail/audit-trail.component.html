@@ -1,0 +1,303 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-file-search"></i> Audit Trail
+          </h4>
+          <div>
+            <button type="button" class="btn btn-outline-primary btn-sm me-2" (click)="toggleViewMode()">
+              <i [class]="viewMode === 'table' ? 'ph-clock-counter-clockwise' : 'ph-table'"></i>
+              {{ viewMode === 'table' ? 'Timeline View' : 'Table View' }}
+            </button>
+            <button type="button" class="btn btn-success btn-sm" (click)="exportToExcel()">
+              <i class="ph-export"></i> Export
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Summary Statistics -->
+          <div *ngIf="summary" class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="stat-card bg-primary">
+                <div class="stat-icon"><i class="ph-files"></i></div>
+                <div class="stat-content">
+                  <h3 class="mb-0">{{ summary.totalEntries }}</h3>
+                  <p class="mb-0">Total Entries</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="stat-card bg-success">
+                <div class="stat-icon"><i class="ph-check-circle"></i></div>
+                <div class="stat-content">
+                  <h3 class="mb-0">{{ summary.successCount }}</h3>
+                  <p class="mb-0">Successful</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="stat-card bg-danger">
+                <div class="stat-icon"><i class="ph-x-circle"></i></div>
+                <div class="stat-content">
+                  <h3 class="mb-0">{{ summary.failureCount }}</h3>
+                  <p class="mb-0">Failed</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="stat-card bg-warning">
+                <div class="stat-icon"><i class="ph-warning"></i></div>
+                <div class="stat-content">
+                  <h3 class="mb-0">{{ summary.criticalCount }}</h3>
+                  <p class="mb-0">Critical</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <form [formGroup]="filterForm">
+            <div class="row mb-4">
+              <!-- Search -->
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" formControlName="searchTerm" 
+                       placeholder="Search description...">
+              </div>
+
+              <!-- Date Range -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" formControlName="endDate">
+              </div>
+
+              <!-- Module -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Module</label>
+                <select class="form-select" formControlName="module">
+                  <option value="">All Modules</option>
+                  <option *ngFor="let module of modules" [value]="module">{{ module }}</option>
+                </select>
+              </div>
+
+              <!-- Action -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Action</label>
+                <select class="form-select" formControlName="action">
+                  <option value="">All Actions</option>
+                  <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
+                </select>
+              </div>
+
+              <!-- Severity -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Severity</label>
+                <select class="form-select" formControlName="severity">
+                  <option value="">All</option>
+                  <option *ngFor="let severity of severities" [value]="severity">{{ severity }}</option>
+                </select>
+              </div>
+
+              <!-- User Role -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">User Role</label>
+                <select class="form-select" formControlName="userRole">
+                  <option value="">All Roles</option>
+                  <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
+                </select>
+              </div>
+
+              <!-- User Name -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">User Name</label>
+                <input type="text" class="form-control" formControlName="userName" 
+                       placeholder="Enter user name...">
+              </div>
+
+              <!-- Entity Type -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Entity Type</label>
+                <input type="text" class="form-control" formControlName="entityType" 
+                       placeholder="e.g., Medicine, Patient...">
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="success">
+                  <option value="">All</option>
+                  <option value="true">Success</option>
+                  <option value="false">Failed</option>
+                </select>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-primary w-100 me-1" (click)="applyFilters()">
+                  <i class="ph-funnel"></i> Apply
+                </button>
+              </div>
+
+              <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                  <i class="ph-x"></i> Clear
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Table View -->
+          <div *ngIf="viewMode === 'table'" class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Module</th>
+                  <th>Action</th>
+                  <th>Description</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="auditEntries.length === 0 && !isLoading">
+                  <td colspan="8" class="text-center text-muted py-4">
+                    No audit entries found
+                  </td>
+                </tr>
+                <tr *ngFor="let entry of auditEntries">
+                  <td>
+                    {{ entry.timestamp | date:'dd/MM/yyyy' }}
+                    <br>
+                    <small class="text-muted">{{ entry.timestamp | date:'hh:mm:ss a' }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ entry.userName }}</strong>
+                    <br>
+                    <small class="text-muted">{{ entry.userRole }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ entry.module }}</span>
+                  </td>
+                  <td>{{ entry.action }}</td>
+                  <td>
+                    <span [title]="entry.description">
+                      {{ entry.description.length > 50 ? (entry.description | slice:0:50) + '...' : entry.description }}
+                    </span>
+                    <br>
+                    <small class="text-muted" *ngIf="entry.entityName">{{ entry.entityName }}</small>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getSeverityBadgeClass(entry.severity)">
+                      {{ entry.severity }}
+                    </span>
+                  </td>
+                  <td>
+                    <i [class]="getStatusIcon(entry.success)" [ngClass]="getStatusClass(entry.success)"></i>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-primary" 
+                              (click)="viewDetails(entry)"
+                              title="View Details">
+                        <i class="ph-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-info" 
+                              (click)="viewUserHistory(entry)"
+                              title="User History">
+                        <i class="ph-user"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" 
+                              *ngIf="entry.entityId"
+                              (click)="viewEntityHistory(entry)"
+                              title="Entity History">
+                        <i class="ph-clock-counter-clockwise"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Timeline View -->
+          <div *ngIf="viewMode === 'timeline'" class="timeline-container">
+            <div *ngIf="auditEntries.length === 0 && !isLoading" class="text-center text-muted py-4">
+              No audit entries found
+            </div>
+            <div *ngFor="let entry of auditEntries" class="timeline-item">
+              <div class="timeline-marker" [ngClass]="getSeverityClass(entry.severity)">
+                <i [class]="getStatusIcon(entry.success)"></i>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h6 class="mb-1">
+                    <span class="badge bg-secondary me-2">{{ entry.module }}</span>
+                    {{ entry.action }}
+                    <span class="badge" [ngClass]="getSeverityBadgeClass(entry.severity)">{{ entry.severity }}</span>
+                  </h6>
+                  <small class="text-muted">
+                    {{ entry.timestamp | date:'dd/MM/yyyy hh:mm:ss a' }} by {{ entry.userName }} ({{ entry.userRole }})
+                  </small>
+                </div>
+                <p class="mb-1">{{ entry.description }}</p>
+                <div *ngIf="entry.entityName" class="text-muted small">
+                  Entity: {{ entry.entityName }}
+                </div>
+                <div class="mt-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="viewDetails(entry)">
+                    <i class="ph-eye"></i> View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between align-items-center mt-4" *ngIf="totalPages > 1">
+            <div>
+              Showing {{ (currentPage - 1) * pageSize + 1 }} to 
+              {{ Math.min(currentPage * pageSize, totalRecords) }} of 
+              {{ totalRecords }} entries
+            </div>
+
+            <nav>
+              <ul class="pagination mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="previousPage()">
+                    <i class="ph-caret-left"></i> Previous
+                  </button>
+                </li>
+
+                <li class="page-item" *ngFor="let page of getPageNumbers()" 
+                    [class.active]="page === currentPage">
+                  <button class="page-link" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
+                </li>
+
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()">
+                    Next <i class="ph-caret-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

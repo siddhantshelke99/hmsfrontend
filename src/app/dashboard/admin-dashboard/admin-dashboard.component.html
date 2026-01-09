@@ -1,0 +1,213 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Admin Dashboard</h2>
+      <p class="text-muted mb-0">System Overview & Management</p>
+    </div>
+    <div class="text-end">
+      <button class="btn btn-outline-primary btn-sm" (click)="refreshDashboard()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <small class="d-block text-muted mt-2">
+        Last updated: {{ lastUpdated | date:'short' }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <app-loader *ngIf="isLoading" message="Loading dashboard..." [overlay]="false"></app-loader>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && dashboardData">
+    
+    <!-- Metrics Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-3 col-md-4 col-sm-6" *ngFor="let metric of metrics">
+        <div class="card metric-card h-100" [class]="'border-' + metric.color">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <p class="text-muted mb-1 small">{{ metric.label }}</p>
+                <h3 class="mb-0" [class]="'text-' + metric.color">{{ metric.value }}</h3>
+                <small class="text-success" *ngIf="metric.trend">
+                  <i class="bi" [class.bi-arrow-up]="metric.trend.isPositive" 
+                     [class.bi-arrow-down]="!metric.trend.isPositive"></i>
+                  {{ metric.trend.value }} today
+                </small>
+              </div>
+              <div class="metric-icon" [class]="'bg-' + metric.color + '-subtle'">
+                <i class="bi" [class]="metric.icon" [class]="'text-' + metric.color"></i>
+              </div>
+            </div>
+            <a *ngIf="metric.link" [routerLink]="metric.link" class="stretched-link"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Critical Alerts -->
+    <div class="row mb-4" *ngIf="dashboardData.systemAlerts && dashboardData.systemAlerts.length > 0">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              System Alerts ({{ dashboardData.systemAlerts.length }})
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div *ngFor="let alert of dashboardData.systemAlerts" 
+                   class="list-group-item" 
+                   [class]="getAlertClass(alert.type)"
+                   [class.opacity-50]="alert.acknowledged">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                      <i class="bi me-2" [class]="getAlertIcon(alert.type)"></i>
+                      <strong>{{ alert.module }}</strong>
+                      <span class="badge bg-secondary ms-2">{{ alert.type }}</span>
+                    </div>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <small class="text-muted">{{ alert.timestamp | date:'medium' }}</small>
+                  </div>
+                  <button *ngIf="!alert.acknowledged" 
+                          class="btn btn-sm btn-outline-dark" 
+                          (click)="acknowledgeAlert(alert)">
+                    <i class="bi bi-check2"></i> Acknowledge
+                  </button>
+                  <span *ngIf="alert.acknowledged" class="badge bg-success">
+                    <i class="bi bi-check-circle-fill"></i> Acknowledged
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activities & Monthly Summary -->
+    <div class="row g-3">
+      <!-- Recent Activities -->
+      <div class="col-lg-8">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-clock-history me-2"></i>
+              Recent Activities
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let activity of dashboardData.recentActivities">
+                    <td>
+                      <small>{{ activity.timestamp | date:'short' }}</small>
+                    </td>
+                    <td>{{ activity.userName }}</td>
+                    <td>
+                      <span class="badge bg-primary">{{ activity.userRole }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-info">{{ activity.action }}</span>
+                    </td>
+                    <td>{{ activity.module }}</td>
+                    <td>
+                      <small class="text-muted">{{ activity.details }}</small>
+                    </td>
+                  </tr>
+                  <tr *ngIf="dashboardData.recentActivities.length === 0">
+                    <td colspan="6" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                      No recent activities
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/audit" class="btn btn-sm btn-outline-primary">
+              View Full Audit Log <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Summary -->
+      <div class="col-lg-4">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-calendar3 me-2"></i>
+              Monthly Summary
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h4 class="text-center mb-1">
+                {{ dashboardData.monthlySummary.month }} {{ dashboardData.monthlySummary.year }}
+              </h4>
+              <hr>
+            </div>
+            
+            <div class="summary-item mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="bi bi-file-medical me-2"></i>Prescriptions
+                </span>
+                <strong class="fs-5">{{ dashboardData.monthlySummary.totalPrescriptions }}</strong>
+              </div>
+            </div>
+
+            <div class="summary-item mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="bi bi-check-circle me-2"></i>Dispensed
+                </span>
+                <strong class="fs-5">{{ dashboardData.monthlySummary.totalDispensed }}</strong>
+              </div>
+            </div>
+
+            <div class="summary-item mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="bi bi-currency-rupee me-2"></i>Total Value
+                </span>
+                <strong class="fs-5">₹{{ formatCurrency(dashboardData.monthlySummary.totalValue) }}</strong>
+              </div>
+            </div>
+
+            <div class="summary-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                  <i class="bi bi-bag me-2"></i>Outsourced
+                </span>
+                <strong class="fs-5">{{ dashboardData.monthlySummary.outsourcedCount }}</strong>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-light text-end">
+            <a routerLink="/reports" class="btn btn-sm btn-outline-primary">
+              View Reports <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

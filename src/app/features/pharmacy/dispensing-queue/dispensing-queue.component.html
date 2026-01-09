@@ -1,0 +1,198 @@
+<div class="container-fluid py-4">
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-2">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <h6 class="card-title">Waiting</h6>
+          <h2 class="mb-0">{{ statistics.waiting }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card bg-info text-white">
+        <div class="card-body">
+          <h6 class="card-title">In Progress</h6>
+          <h2 class="mb-0">{{ statistics.inProgress }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <h6 class="card-title">Urgent</h6>
+          <h2 class="mb-0">{{ statistics.urgentCount }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h6 class="card-title">Emergency</h6>
+          <h2 class="mb-0">{{ statistics.emergencyCount }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Avg. Wait Time</h6>
+          <h2 class="mb-0" [ngClass]="getWaitTimeColor(statistics.averageWaitTime)">
+            {{ statistics.averageWaitTime }} min
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Queue -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="ph-queue"></i> Dispensing Queue
+          </h4>
+          <div>
+            <button type="button" class="btn btn-outline-primary btn-sm me-2" (click)="refresh()">
+              <i class="ph-arrows-clockwise"></i> Refresh
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" routerLink="/pharmacy/history">
+              <i class="ph-clock-counter-clockwise"></i> History
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Filters -->
+          <form [formGroup]="filterForm" class="mb-4">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="">All Status</option>
+                  <option *ngFor="let status of queueStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Priority</label>
+                <select class="form-select" formControlName="priority">
+                  <option value="">All Priorities</option>
+                  <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" formControlName="searchTerm" 
+                       placeholder="Search by prescription no, patient name, token...">
+              </div>
+            </div>
+          </form>
+
+          <!-- Queue Count -->
+          <div class="mb-3">
+            <strong>{{ filteredItems.length }}</strong> prescription(s) in queue
+            <small class="text-muted ms-2">(Auto-refresh: 30 seconds)</small>
+          </div>
+
+          <!-- Queue Items -->
+          <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!isLoading && filteredItems.length === 0" class="text-center py-5">
+            <i class="ph-check-circle fs-1 text-success"></i>
+            <p class="text-muted mt-2">No prescriptions in queue</p>
+          </div>
+
+          <div class="row g-3" *ngIf="!isLoading && filteredItems.length > 0">
+            <div class="col-md-6 col-lg-4" *ngFor="let item of filteredItems">
+              <div class="card queue-card h-100" 
+                   [class.border-danger]="item.priority === QueuePriority.EMERGENCY"
+                   [class.border-warning]="item.priority === QueuePriority.URGENT"
+                   (click)="startDispensing(item)">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                      <h5 class="card-title mb-1">{{ item.patientName }}</h5>
+                      <small class="text-muted">{{ item.patientRegistrationNumber }}</small>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge" [ngClass]="getPriorityBadgeClass(item.priority)">
+                        {{ item.priority }}
+                      </span>
+                      <br>
+                      <span class="badge mt-1" [ngClass]="getStatusBadgeClass(item.status)">
+                        {{ item.status }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="queue-details">
+                    <p class="mb-2">
+                      <i class="ph-file-text me-2"></i>
+                      <strong>Rx:</strong> {{ item.prescriptionNumber }}
+                    </p>
+                    <p class="mb-2" *ngIf="item.tokenNumber">
+                      <i class="ph-ticket me-2"></i>
+                      <strong>Token:</strong> {{ item.tokenNumber }}
+                    </p>
+                    <p class="mb-2">
+                      <i class="ph-user-circle me-2"></i>
+                      <strong>Doctor:</strong> {{ item.doctorName }}
+                    </p>
+                    <p class="mb-2">
+                      <i class="ph-hospital me-2"></i>
+                      <strong>Dept:</strong> {{ item.department }}
+                    </p>
+                    <p class="mb-2">
+                      <i class="ph-prescription-bottle me-2"></i>
+                      <strong>Items:</strong> {{ item.itemCount }} medicine(s), Total Qty: {{ item.totalQuantity }}
+                    </p>
+                    <p class="mb-2">
+                      <i class="ph-clock me-2"></i>
+                      <strong>Prescribed:</strong> {{ item.prescriptionDate | date:'dd/MM/yyyy hh:mm a' }}
+                    </p>
+                    <p class="mb-0" *ngIf="item.estimatedWaitTime">
+                      <i class="ph-hourglass me-2"></i>
+                      <strong>Wait Time:</strong> 
+                      <span [ngClass]="getWaitTimeColor(item.estimatedWaitTime)">
+                        {{ item.estimatedWaitTime }} min
+                      </span>
+                    </p>
+                  </div>
+
+                  <div class="card-footer bg-transparent border-top mt-3 pt-3">
+                    <div class="d-flex justify-content-between">
+                      <button type="button" class="btn btn-primary btn-sm" (click)="startDispensing(item)">
+                        <i class="ph-play"></i> Start Dispensing
+                      </button>
+                      <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-warning btn-sm" 
+                                *ngIf="item.status === DispensingQueueStatus.WAITING"
+                                (click)="putOnHold(item, $event)"
+                                title="Put on Hold">
+                          <i class="ph-pause"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm" 
+                                *ngIf="item.status === DispensingQueueStatus.ON_HOLD"
+                                (click)="resumeFromHold(item, $event)"
+                                title="Resume">
+                          <i class="ph-play"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="isLoading"></app-loader>

@@ -1,0 +1,74 @@
+.metric-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  .metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 1.5rem;
+    }
+  }
+
+  h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+}
+
+.summary-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+
+  &:hover {
+    background-color: #e9ecef;
+  }
+}
+
+.table {
+  font-size: 0.875rem;
+
+  th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    background-color: #f8f9fa;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.list-group-item {
+  border-left: 3px solid transparent;
+
+  &.alert-danger {
+    border-left-color: #dc3545;
+  }
+
+  &.alert-warning {
+    border-left-color: #ffc107;
+  }
+
+  &.alert-info {
+    border-left-color: #0dcaf0;
+  }
+}

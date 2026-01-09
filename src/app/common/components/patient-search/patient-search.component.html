@@ -1,0 +1,128 @@
+<div class="patient-search-wrapper">
+  <!-- Basic Search -->
+  <div class="search-input-group">
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-search"></i>
+      </span>
+      <input
+        type="text"
+        class="form-control"
+        [placeholder]="placeholder"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput($any($event.target).value)"
+        (blur)="closeDropdown()"
+        autocomplete="off"
+      />
+      <button 
+        class="btn btn-outline-secondary" 
+        type="button" 
+        *ngIf="searchTerm"
+        (click)="clearSelection()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <button 
+        class="btn btn-outline-primary" 
+        type="button" 
+        *ngIf="showAdvancedSearch"
+        (click)="toggleAdvancedSearch()">
+        <i class="bi bi-funnel"></i> Advanced
+      </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="search-loading" *ngIf="isSearching">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Searching...</span>
+      </div>
+    </div>
+
+    <!-- Search Results Dropdown -->
+    <div class="search-dropdown card shadow-sm" *ngIf="showDropdown && patients.length > 0">
+      <ul class="list-group list-group-flush">
+        <li 
+          class="list-group-item list-group-item-action" 
+          *ngFor="let patient of patients"
+          (mousedown)="selectPatient(patient)">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-bold">{{ patient.firstName }} {{ patient.lastName }}</div>
+              <small class="text-muted">Reg No: {{ patient.registrationNumber }}</small>
+            </div>
+            <div class="text-end">
+              <small class="text-muted d-block">{{ patient.contactNumber }}</small>
+              <span class="badge bg-secondary">{{ patient.gender }}</span>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- No Results -->
+    <div class="search-dropdown card shadow-sm" *ngIf="showDropdown && patients.length === 0 && searchTerm.length >= 2 && !isSearching">
+      <div class="card-body text-center text-muted">
+        <i class="bi bi-inbox fs-3"></i>
+        <p class="mb-0 mt-2">No patients found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Search Panel -->
+  <div class="card mt-3" *ngIf="showAdvanced">
+    <div class="card-header bg-light">
+      <strong>Advanced Search</strong>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Registration Number</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.registrationNumber"
+            placeholder="Enter registration number">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Contact Number</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.contactNumber"
+            placeholder="Enter contact number">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.firstName"
+            placeholder="Enter first name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.lastName"
+            placeholder="Enter last name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Aadhar Number</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="advancedCriteria.aadharNumber"
+            placeholder="Enter aadhar number">
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary" (click)="searchAdvanced()">
+          <i class="bi bi-search"></i> Search
+        </button>
+        <button class="btn btn-secondary" (click)="resetAdvancedSearch()">
+          <i class="bi bi-x-circle"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
