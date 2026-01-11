@@ -106,3 +106,7 @@ dist
 #angular catch file
 .angular
 .vscode/
+
+
+*.exe
+src/assets/images/*.exe
