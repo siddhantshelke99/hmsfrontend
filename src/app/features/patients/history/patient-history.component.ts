@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { PatientService, PatientHistory, PatientVisit, VitalSign } from '../services/patient.service';
+import { PatientService, } from '../services/patient.service';
 import { Patient } from '@app/common/models/patient.model';
 import { LoaderComponent } from '@app/common';
 
@@ -15,7 +15,7 @@ import { LoaderComponent } from '@app/common';
 export class PatientHistoryComponent implements OnInit {
   patientId!: string;
   patient: Patient | null = null;
-  patientHistory: PatientHistory | null = null;
+    patientHistory: any | null = null;
   isLoading: boolean = false;
   
   activeTab: string = 'overview';
@@ -33,17 +33,17 @@ export class PatientHistoryComponent implements OnInit {
   }
 
   loadPatientHistory(): void {
-    this.isLoading = true;
-    this.patientService.getPatientHistory(this.patientId).subscribe({
-      next: (history) => {
-        this.patientHistory = history;
-        this.patient = history.patient;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+    // this.isLoading = true;
+    // this.patientService.getPatientHistory(this.patientId).subscribe({
+    //   next: (history) => {
+    //     this.patientHistory = history;
+    //     this.patient = history.patient;
+    //     this.isLoading = false;
+    //   },
+    //   error: () => {
+    //     this.isLoading = false;
+    //   }
+    // });
   }
 
   setActiveTab(tab: string): void {

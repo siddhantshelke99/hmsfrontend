@@ -113,11 +113,7 @@ export const routes: Routes = [
         component: PatientRegistrationComponent
         // TODO: Add auth guard for ADMIN/RECEPTIONIST roles
       },
-      {
-        path: 'patients/token/generate',
-        component: TokenGenerationComponent
-        // TODO: Add auth guard for RECEPTIONIST/NURSE roles
-      },
+   
       {
         path: 'patients/token/generate/:patientId',
         component: TokenGenerationComponent

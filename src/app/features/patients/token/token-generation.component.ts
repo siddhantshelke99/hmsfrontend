@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { PatientService, TokenInfo } from '../services/patient.service';
+import { PatientService } from '../services/patient.service';
 import { Patient } from '@app/common/models/patient.model';
 import { PatientSearchComponent } from '@app/common/components/patient-search/patient-search.component';
 import { PatientSearchService } from '@app/common/components/patient-search/patient-search.service';
@@ -21,8 +21,8 @@ export class TokenGenerationComponent implements OnInit {
   isSubmitting: boolean = false;
   isLoadingQueue: boolean = false;
   selectedPatient: Patient | null = null;
-  todaysTokens: TokenInfo[] = [];
-  filteredTokens: TokenInfo[] = [];
+  todaysTokens: any[] = [];
+  filteredTokens: any[] = [];
   selectedDoctorTokens: number = 0;
 
   departments = [
@@ -113,11 +113,11 @@ export class TokenGenerationComponent implements OnInit {
 
   loadPatient(patientId: string): void {
     this.patientService.getPatientById(patientId).subscribe({
-      next: (patient) => {
-        this.selectedPatient = patient;
+     next: (response: any) => {
+        this.selectedPatient = response.data;
         this.tokenForm.patchValue({
-          patientId: patient.id,
-          patientName: `${patient.firstName} ${patient.lastName}`
+          patientId: response.data.id,
+          patientName: `${response.data.firstName} ${response.data.lastName}`
         });
       },
       error: () => {
@@ -127,7 +127,9 @@ export class TokenGenerationComponent implements OnInit {
   }
 
   loadTodaysTokens(): void {
+
     this.isLoadingQueue = true;
+    
     this.patientService.getTodaysTokens().subscribe({
       next: (tokens) => {
         this.todaysTokens = tokens;
@@ -200,7 +202,7 @@ export class TokenGenerationComponent implements OnInit {
     if (confirmed) {
       this.isSubmitting = true;
 
-      const tokenData: Partial<TokenInfo> = {
+      const tokenData: Partial<any> = {
         patientId: formValue.patientId,
         patientName: formValue.patientName,
         doctorId: formValue.doctorId,
@@ -246,7 +248,7 @@ export class TokenGenerationComponent implements OnInit {
     }
   }
 
-  printToken(token: TokenInfo): void {
+  printToken(token: any): void {
     // Create print window with token details
     const printContent = `
       <html>

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { PatientService, PatientRegistrationData } from '../services/patient.service';
+import { PatientService } from '../services/patient.service';
 import { ConfirmDialogComponent, LoaderComponent } from '@app/common';
 import { AuditLogService, AuditAction, AuditModule } from '@app/common';
 
@@ -37,12 +37,13 @@ export class PatientRegistrationComponent implements OnInit {
     private patientService: PatientService,
     private confirmDialog: ConfirmDialogComponent,
     private auditLog: AuditLogService,
-    private router: Router
+    private router: Router,
+
   ) {
     this.initForm();
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   initForm(): void {
     this.registrationForm = this.fb.group({
@@ -54,31 +55,31 @@ export class PatientRegistrationComponent implements OnInit {
       age: [{ value: '', disabled: true }],
       gender: ['', Validators.required],
       bloodGroup: [''],
-      
+
       // Contact Details
       mobileNumber: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
       alternateNumber: ['', Validators.pattern(/^[6-9]\d{9}$/)],
       email: ['', Validators.email],
-      
+
       // Address
       address: ['', Validators.required],
       city: ['', Validators.required],
       state: ['', Validators.required],
       pincode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
-      
+
       // Identity
       aadharNumber: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
-      
+
       // Emergency Contact
       emergencyContactName: ['', Validators.required],
       emergencyContactNumber: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
       emergencyContactRelation: ['', Validators.required],
-      
+
       // Medical Info (optional)
       allergies: [''],
       chronicConditions: [''],
       currentMedications: [''],
-      
+
       // Other
       remarks: ['']
     });
@@ -182,7 +183,7 @@ export class PatientRegistrationComponent implements OnInit {
             'Continue Anyway',
             'warning'
           );
-          
+
           if (viewExisting && result.patient?.id) {
             this.router.navigate(['/patients/history', result.patient.id]);
           }
@@ -215,36 +216,70 @@ export class PatientRegistrationComponent implements OnInit {
       this.isSubmitting = true;
 
       const formValue = this.registrationForm.getRawValue();
-      const patientData: PatientRegistrationData = {
-        ...formValue,
-        name: `${formValue.firstName} ${formValue.middleName || ''} ${formValue.lastName}`.trim(),
-        photoFile: this.selectedPhotoFile || undefined,
-        aadharFile: this.selectedAadharFile || undefined,
-        allergies: formValue.allergies ? formValue.allergies.split(',').map((a: string) => a.trim()) : [],
-        chronicConditions: formValue.chronicConditions ? formValue.chronicConditions.split(',').map((c: string) => c.trim()) : [],
-        currentMedications: formValue.currentMedications ? formValue.currentMedications.split(',').map((m: string) => m.trim()) : []
-      };
 
-      this.patientService.registerPatient(patientData).subscribe({
-        next: (patient) => {
+      const formData = new FormData();
+
+      Object.keys(formValue).forEach(key => {
+        if (formValue[key] !== null && formValue[key] !== undefined) {
+          formData.append(key, formValue[key]);
+        }
+      });
+
+      // computed fields
+      formData.append(
+        'name',
+        `${formValue.firstName} ${formValue.middleName || ''} ${formValue.lastName}`.trim()
+      );
+
+      // arrays → stringify
+      formData.append(
+        'allergies',
+        JSON.stringify(
+          formValue.allergies
+            ? formValue.allergies.split(',').map((a: string) => a.trim())
+            : []
+        )
+      );
+
+      formData.append(
+        'chronicConditions',
+        JSON.stringify(
+          formValue.chronicConditions
+            ? formValue.chronicConditions.split(',').map((c: string) => c.trim())
+            : []
+        )
+      );
+
+      formData.append(
+        'currentMedications',
+        JSON.stringify(
+          formValue.currentMedications
+            ? formValue.currentMedications.split(',').map((m: string) => m.trim())
+            : []
+        )
+      );
+
+      // files
+      if (this.selectedPhotoFile) {
+        formData.append('photoFile', this.selectedPhotoFile);
+      }
+
+      if (this.selectedAadharFile) {
+        formData.append('aadharFile', this.selectedAadharFile);
+      }
+
+      this.patientService.registerPatient(formData).subscribe({
+        next: (response: any) => {
+          const patient = response.data;
           this.confirmDialog.success(
             'Registration Successful',
-            `Patient registered successfully!\n\nReg. No: ${patient.registrationNumber}\nName: ${patient.firstName} ${patient.lastName}`
+            `Patient registered successfully!\n\nReg. No: ${response.patientId}\nName: ${patient.firstName} ${patient.lastName}`
           );
-
-          this.auditLog.logAction(
-            AuditAction.CREATE,
-            AuditModule.PATIENT,
-            'PatientRegistration',
-            patient.id || '',
-            `Registered new patient: ${patient?.firstName} ${patient?.lastName} (${patient?.registrationNumber})`
-          ).subscribe();
 
           this.isSubmitting = false;
 
-          setTimeout(() => {
-            this.router.navigate(['/patients/token/generate', patient.id]);
-          }, 2000);
+          // Ensure proper navigation to the token generation page
+          this.router.navigateByUrl(`/patients/token/generate/${response.patientId}`);
         },
         error: (error) => {
           this.isSubmitting = false;

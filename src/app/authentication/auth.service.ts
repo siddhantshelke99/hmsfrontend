@@ -43,7 +43,7 @@ export class AuthService {
       password: data?.password,
     };
 
-    return this.http.post<AuthResponse>(`${environment.api_rul}/api/auth/authenticate`, authData, { headers, observe: 'response' })
+    return this.http.post<AuthResponse>(`${environment. api_url}/api/auth/authenticate`, authData, { headers, observe: 'response' })
       .pipe(
         catchError(error => {
           console.error('Login error:', error);

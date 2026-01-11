@@ -81,7 +81,7 @@ export const NavigationItems: NavigationItem[] = [
         title: 'Token Generation',
         type: 'item',
         classes: 'nav-item',
-        url: '/patients/token',
+        url: '/patients/token/generate',
         icon: 'ti ti-ticket',
         breadcrumbs: true
       },

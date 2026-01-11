@@ -6,11 +6,19 @@ import { DashboardService } from '../services/dashboard.service';
 import { AdminDashboardData, DashboardMetric, SystemAlert } from '../models/dashboard.model';
 import { LoaderComponent } from '@app/common';
 import { AuditLogService, AuditAction, AuditModule } from '@app/common';
+import { SparklineChartComponent } from '@app/common/components/sparkline-chart/sparkline-chart.component';
+import { GradientAreaChartComponent } from '@app/common/components/gradient-area-chart/gradient-area-chart.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, LoaderComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    LoaderComponent,
+    SparklineChartComponent,
+    GradientAreaChartComponent
+  ],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
@@ -19,6 +27,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   metrics: DashboardMetric[] = [];
   isLoading: boolean = true;
   lastUpdated: Date = new Date();
+
+  monthlySalesData = [10, 20, 15, 25, 30, 20, 10];
+  revenueData = [{ name: 'Revenue', data: [100, 200, 150, 300, 250, 400, 350] }];
+  revenueCategories = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
 
   private destroy$ = new Subject<void>();
 

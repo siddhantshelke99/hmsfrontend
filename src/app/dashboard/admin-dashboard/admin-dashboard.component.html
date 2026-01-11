@@ -19,7 +19,7 @@
   <app-loader *ngIf="isLoading" message="Loading dashboard..." [overlay]="false"></app-loader>
 
   <!-- Dashboard Content -->
-  <div *ngIf="!isLoading && dashboardData">
+  <div *ngIf="!isLoading">
     
     <!-- Metrics Cards -->
     <div class="row g-3 mb-4">
@@ -199,11 +199,38 @@
                 <strong class="fs-5">{{ dashboardData.monthlySummary.outsourcedCount }}</strong>
               </div>
             </div>
+
+            <!-- Sparkline Chart for Monthly Sales -->
+            <div class="summary-card mt-4">
+              <h3 class="h6 text-muted mb-3">Monthly Sales</h3>
+              <app-sparkline-chart [series]="monthlySalesData" [height]="50"></app-sparkline-chart>
+            </div>
           </div>
           <div class="card-footer bg-light text-end">
             <a routerLink="/reports" class="btn btn-sm btn-outline-primary">
               View Reports <i class="bi bi-arrow-right"></i>
             </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add the Gradient Area Chart component -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-graph-up-arrow me-2"></i>
+              Revenue Trends
+            </h5>
+          </div>
+          <div class="card-body">
+            <app-gradient-area-chart
+              [title]="'Revenue Trends'"
+              [series]="revenueData"
+              [categories]="revenueCategories">
+            </app-gradient-area-chart>
           </div>
         </div>
       </div>
