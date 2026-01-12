@@ -33,17 +33,20 @@ export class PatientHistoryComponent implements OnInit {
   }
 
   loadPatientHistory(): void {
-    // this.isLoading = true;
-    // this.patientService.getPatientHistory(this.patientId).subscribe({
-    //   next: (history) => {
-    //     this.patientHistory = history;
-    //     this.patient = history.patient;
-    //     this.isLoading = false;
-    //   },
-    //   error: () => {
-    //     this.isLoading = false;
-    //   }
-    // });
+    this.isLoading = true;
+    this.patientService.getPatientHistory(this.patientId).subscribe({
+      next: (response:any) => {
+        // The backend returns { message, data: { patient, visits, ... } }
+        const historyData = response.data;
+        this.patientHistory = historyData;
+        this.patient = historyData.patient;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching history', err);
+        this.isLoading = false;
+      }
+    });
   }
 
   setActiveTab(tab: string): void {

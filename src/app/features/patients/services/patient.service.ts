@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root',
 })
 export class PatientService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ============================================
   // PATIENT REGISTRATION
@@ -36,7 +36,7 @@ export class PatientService {
   updatePatient(id: string, patient: Partial<Patient>): Observable<any> {
     return this.http.post(`${environment.api_url}/api/patients/update/${id}`, patient);
   }
-  
+
   /**
    * Search patients
    */
@@ -97,10 +97,11 @@ export class PatientService {
   /**
    * Get complete patient history
    */
-  getPatientHistory(patientId: string): Observable<any> {
+  // patient.service.ts
+
+  getPatientHistory(patientId: string) {
     return this.http.get(`${environment.api_url}/api/patients/history/${patientId}`);
   }
-
   // ============================================
   // STATISTICS
   // ============================================

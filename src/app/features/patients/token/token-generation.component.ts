@@ -113,10 +113,10 @@ export class TokenGenerationComponent implements OnInit {
 
   loadPatient(patientId: string): void {
     this.patientService.getPatientById(patientId).subscribe({
-     next: (response: any) => {
+      next: (response: any) => {
         this.selectedPatient = response.data;
         this.tokenForm.patchValue({
-          patientId: response.data.id,
+          patientId: response.data.patientId,
           patientName: `${response.data.firstName} ${response.data.lastName}`
         });
       },
@@ -232,9 +232,9 @@ export class TokenGenerationComponent implements OnInit {
           ).subscribe();
 
           this.isSubmitting = false;
-          this.loadTodaysTokens();
+          this.loadTodaysTokens(); // Refresh the side list
           this.clearForm();
-
+          this.printToken(token);
           // Optional: Print token
           setTimeout(() => {
             this.printToken(token);

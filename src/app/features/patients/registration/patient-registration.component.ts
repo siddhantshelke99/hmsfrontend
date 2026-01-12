@@ -232,32 +232,9 @@ export class PatientRegistrationComponent implements OnInit {
       );
 
       // arrays → stringify
-      formData.append(
-        'allergies',
-        JSON.stringify(
-          formValue.allergies
-            ? formValue.allergies.split(',').map((a: string) => a.trim())
-            : []
-        )
-      );
-
-      formData.append(
-        'chronicConditions',
-        JSON.stringify(
-          formValue.chronicConditions
-            ? formValue.chronicConditions.split(',').map((c: string) => c.trim())
-            : []
-        )
-      );
-
-      formData.append(
-        'currentMedications',
-        JSON.stringify(
-          formValue.currentMedications
-            ? formValue.currentMedications.split(',').map((m: string) => m.trim())
-            : []
-        )
-      );
+      formData.append('allergies', formValue.allergies || '');
+      formData.append('chronicConditions', formValue.chronicConditions || '');
+      formData.append('currentMedications', formValue.currentMedications || '');
 
       // files
       if (this.selectedPhotoFile) {
