@@ -51,10 +51,10 @@ export class PatientSearchComponent {
           );
         })
       )
-      .subscribe((patients) => {
-        this.patients = patients;
+      .subscribe((res:any) => {
+        this.patients = res.data || [];
         this.isSearching = false;
-        this.showDropdown = patients.length > 0;
+        this.showDropdown = this.patients.length > 0;
       });
   }
 
@@ -88,10 +88,10 @@ export class PatientSearchComponent {
     this.patientSearchService
       .advancedSearch(this.advancedCriteria)
       .subscribe({
-        next: (patients) => {
-          this.patients = patients;
+        next: (res:any) => {
+          this.patients = res.data || [];
           this.isSearching = false;
-          this.showDropdown = patients.length > 0;
+          this.showDropdown = this.patients.length > 0;
         },
         error: () => {
           this.isSearching = false;

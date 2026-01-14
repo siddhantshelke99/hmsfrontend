@@ -164,7 +164,7 @@
         <div class="card-body p-0">
           <app-loader *ngIf="isLoadingQueue"></app-loader>
 
-          <div class="queue-list" *ngIf="!isLoadingQueue">
+          <div class="queue-list" *ngIf="!isLoadingQueue ">
             <div 
               *ngFor="let token of filteredTokens" 
               class="queue-item"
@@ -209,6 +209,41 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Today's Tokens -->
+  <div class="card mt-4">
+    <div class="card-header bg-secondary text-white">
+      <h5 class="mb-0">Today's Tokens</h5>
+    </div>
+    <div class="card-body">
+      <app-loader *ngIf="isLoadingQueue"></app-loader>
+
+      <table class="table table-bordered" *ngIf="!isLoadingQueue && todaysTokens.length">
+        <thead>
+          <tr>
+            <th>Token Number</th>
+            <th>Patient Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let token of todaysTokens">
+            <td>{{ token.tokenNumber }}</td>
+            <td>{{ token.patientName }}</td>
+            <td>{{ token.status }}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="printToken(token)">Print</button>
+              <button class="btn btn-sm btn-success" (click)="updateTokenStatus(token.id, 'Running')">Mark Running</button>
+              <button class="btn btn-sm btn-danger" (click)="updateTokenStatus(token.id, 'Completed')">Mark Completed</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p *ngIf="!isLoadingQueue && !todaysTokens.length" class="text-muted">No tokens generated today.</p>
     </div>
   </div>
 </div>

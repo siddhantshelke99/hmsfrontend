@@ -40,8 +40,8 @@ export class PatientService {
   /**
    * Search patients
    */
-  searchPatients(criteria: any): Observable<any> {
-    return this.http.post(`${environment.api_url}/api/patients/search`, criteria);
+  searchPatients(criteria: any) {
+    return this.http.get(`${environment.api_url}/api/patients/search`, { params: criteria });
   }
 
   /**

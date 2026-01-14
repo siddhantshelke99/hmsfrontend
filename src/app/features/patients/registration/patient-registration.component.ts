@@ -47,6 +47,7 @@ export class PatientRegistrationComponent implements OnInit {
 
   initForm(): void {
     this.registrationForm = this.fb.group({
+      registrationType: ['OPD', Validators.required],
       // Personal Details
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       middleName: [''],
@@ -102,7 +103,10 @@ export class PatientRegistrationComponent implements OnInit {
     }
     return age;
   }
-
+  get isFullForm(): boolean {
+    const type = this.registrationForm.get('registrationType')?.value;
+    return type === 'Admitted' || type === 'Operation';
+  }
   onPhotoSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -277,5 +281,38 @@ export class PatientRegistrationComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const field = this.registrationForm.get(fieldName);
     return !!(field && field.invalid && field.touched);
+  }
+
+  onRegistrationTypeChange(): void {
+    const registrationType = this.registrationForm.get('registrationType')?.value;
+
+    if (registrationType === 'OPD') {
+      // Clear fields not required for OPD
+      this.registrationForm.patchValue({
+        middleName: '',
+        bloodGroup: '',
+        alternateNumber: '',
+        email: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        aadharNumber: '',
+        emergencyContactName: '',
+        emergencyContactNumber: '',
+        emergencyContactRelation: '',
+        allergies: '',
+        chronicConditions: '',
+        currentMedications: '',
+        remarks: ''
+      });
+
+      // Mark these fields as untouched
+      Object.keys(this.registrationForm.controls).forEach(key => {
+        if (!['firstName', 'lastName', 'dateOfBirth', 'gender', 'mobileNumber'].includes(key)) {
+          this.registrationForm.get(key)?.markAsUntouched();
+        }
+      });
+    }
   }
 }

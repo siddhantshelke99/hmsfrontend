@@ -16,8 +16,74 @@
   <!-- Registration Form -->
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()" *ngIf="!isSubmitting">
     <div class="row">
-      <!-- Left Column -->
-      <div class="col-lg-8">
+      <!-- Registration Type Toggle -->
+      <div class="col-12 mb-4">
+        <label class="form-label">Registration Type <span class="text-danger">*</span></label>
+        <select 
+          class="form-select" 
+          formControlName="registrationType"
+          [class.is-invalid]="isFieldInvalid('registrationType')"
+          (change)="onRegistrationTypeChange()">
+          <option value="OPD">OPD</option>
+          <option value="Admitted">Admitted</option>
+          <option value="Operation">Operation</option>
+        </select>
+        <div *ngIf="isFieldInvalid('registrationType')" class="invalid-feedback">
+          Registration type is required
+        </div>
+      </div>
+
+      <!-- Basic Form for OPD -->
+      <div *ngIf="!isFullForm" class="col-12">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Basic Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  formControlName="firstName"
+                  [class.is-invalid]="isFieldInvalid('firstName')"
+                  placeholder="Enter first name">
+                <div *ngIf="isFieldInvalid('firstName')" class="invalid-feedback">
+                  First name is required (min 2 characters)
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  formControlName="lastName"
+                  [class.is-invalid]="isFieldInvalid('lastName')"
+                  placeholder="Enter last name">
+                <div *ngIf="isFieldInvalid('lastName')" class="invalid-feedback">
+                  Last name is required
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                <input 
+                  type="tel" 
+                  class="form-control" 
+                  formControlName="mobileNumber"
+                  [class.is-invalid]="isFieldInvalid('mobileNumber')"
+                  placeholder="10-digit mobile">
+                <div *ngIf="isFieldInvalid('mobileNumber')" class="invalid-feedback">
+                  Valid 10-digit mobile number required
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Form for Admitted/Operation -->
+      <div *ngIf="isFullForm" class="col-12">
         
         <!-- Personal Details -->
         <div class="card mb-4">
@@ -317,87 +383,8 @@
 
       </div>
 
-      <!-- Right Column -->
-      <div class="col-lg-4">
-        
-        <!-- Photo Upload -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h6 class="mb-0">Patient Photo</h6>
-          </div>
-          <div class="card-body text-center">
-            <div class="photo-preview mb-3">
-              <img 
-                [src]="photoPreview || 'assets/images/user/avatar-default.png'" 
-                alt="Patient Photo"
-                class="img-thumbnail">
-            </div>
-            <input 
-              type="file" 
-              id="photoInput" 
-              class="d-none" 
-              accept="image/*"
-              (change)="onPhotoSelected($event)">
-            <label for="photoInput" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-camera me-2"></i>
-              Choose Photo
-            </label>
-            <p class="text-muted small mt-2 mb-0">JPG/PNG, Max 2MB</p>
-          </div>
-        </div>
-
-        <!-- Aadhar Verification -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h6 class="mb-0">Aadhar Verification</h6>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label">Aadhar Number <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  formControlName="aadharNumber"
-                  [class.is-invalid]="isFieldInvalid('aadharNumber')"
-                  placeholder="12-digit Aadhar"
-                  maxlength="12"
-                  (blur)="checkDuplicate()">
-                <button 
-                  type="button" 
-                  class="btn btn-outline-primary"
-                  (click)="verifyAadhar()"
-                  [disabled]="!registrationForm.get('aadharNumber')?.valid">
-                  <i class="bi bi-check-circle me-1"></i>
-                  Verify
-                </button>
-              </div>
-              <div *ngIf="isFieldInvalid('aadharNumber')" class="text-danger small mt-1">
-                Valid 12-digit Aadhar number required
-              </div>
-              <div *ngIf="aadharVerified" class="text-success small mt-1">
-                <i class="bi bi-check-circle-fill me-1"></i>
-                Aadhar verified successfully
-              </div>
-            </div>
-            <div>
-              <label class="form-label">Upload Aadhar Copy</label>
-              <input 
-                type="file" 
-                id="aadharFileInput" 
-                class="form-control form-control-sm" 
-                accept=".pdf,.jpg,.jpeg,.png"
-                (change)="onAadharFileSelected($event)">
-              <small class="text-muted">PDF/JPG/PNG, Max 5MB</small>
-              <div *ngIf="selectedAadharFile" class="text-success small mt-1">
-                <i class="bi bi-file-check me-1"></i>
-                {{ selectedAadharFile.name }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
+      <!-- Action Buttons -->
+      <div class="col-12">
         <div class="card">
           <div class="card-body">
             <button 
@@ -417,7 +404,6 @@
             </button>
           </div>
         </div>
-
       </div>
     </div>
   </form>

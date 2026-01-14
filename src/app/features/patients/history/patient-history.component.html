@@ -12,7 +12,7 @@
       <button class="btn btn-outline-primary" (click)="printHistory()">
         <i class="bi bi-printer"></i> Print
       </button>
-      <button class="btn btn-outline-secondary" routerLink="/patients">
+      <button class="btn btn-outline-secondary" routerLink="patients/registration">
         <i class="bi bi-arrow-left"></i> Back
       </button>
     </div>
@@ -90,7 +90,7 @@
           [class.active]="activeTab === 'visits'"
           (click)="setActiveTab('visits')"
           href="javascript:void(0)">
-          <i class="bi bi-calendar3 me-2"></i>Visits ({{ patientHistory.visits.length }})
+          <i class="bi bi-calendar3 me-2"></i>Visits ({{ patientHistory?.visits?.length }})
         </a>
       </li>
       <li class="nav-item">
@@ -99,7 +99,7 @@
           [class.active]="activeTab === 'vitals'"
           (click)="setActiveTab('vitals')"
           href="javascript:void(0)">
-          <i class="bi bi-heart-pulse me-2"></i>Vital Signs ({{ patientHistory.vitalSigns.length }})
+          <i class="bi bi-heart-pulse me-2"></i>Vital Signs ({{ patientHistory?.vitalSigns?.length }})
         </a>
       </li>
       <li class="nav-item">
@@ -108,7 +108,7 @@
           [class.active]="activeTab === 'prescriptions'"
           (click)="setActiveTab('prescriptions')"
           href="javascript:void(0)">
-          <i class="bi bi-file-medical me-2"></i>Prescriptions ({{ patientHistory.prescriptions.length }})
+          <i class="bi bi-file-medical me-2"></i>Prescriptions ({{ patientHistory?.prescriptions?.length }})
         </a>
       </li>
       <li class="nav-item">
@@ -117,7 +117,7 @@
           [class.active]="activeTab === 'reports'"
           (click)="setActiveTab('reports')"
           href="javascript:void(0)">
-          <i class="bi bi-file-earmark-text me-2"></i>Lab Reports ({{ patientHistory.labReports.length }})
+          <i class="bi bi-file-earmark-text me-2"></i>Lab Reports ({{ patientHistory?.labReports?.length }})
         </a>
       </li>
     </ul>
@@ -133,13 +133,13 @@
               <h6 class="mb-0">Allergies</h6>
             </div>
             <div class="card-body">
-              <ul class="list-unstyled mb-0" *ngIf="patientHistory.allergies.length > 0">
-                <li *ngFor="let allergy of patientHistory.allergies" class="mb-2">
+              <ul class="list-unstyled mb-0" *ngIf="patientHistory?.allergies?.length > 0">
+                <li *ngFor="let allergy of patientHistory?.allergies" class="mb-2">
                   <i class="bi bi-exclamation-triangle text-danger me-2"></i>
                   {{ allergy }}
                 </li>
               </ul>
-              <p class="text-muted mb-0" *ngIf="patientHistory.allergies.length === 0">
+              <p class="text-muted mb-0" *ngIf="patientHistory?.allergies?.length === 0">
                 No known allergies
               </p>
             </div>
@@ -151,13 +151,13 @@
               <h6 class="mb-0">Chronic Conditions</h6>
             </div>
             <div class="card-body">
-              <ul class="list-unstyled mb-0" *ngIf="patientHistory.chronicConditions.length > 0">
-                <li *ngFor="let condition of patientHistory.chronicConditions" class="mb-2">
+              <ul class="list-unstyled mb-0" *ngIf="patientHistory?.chronicConditions?.length > 0">
+                <li *ngFor="let condition of patientHistory?.chronicConditions" class="mb-2">
                   <i class="bi bi-clipboard-pulse text-warning me-2"></i>
                   {{ condition }}
                 </li>
               </ul>
-              <p class="text-muted mb-0" *ngIf="patientHistory.chronicConditions.length === 0">
+              <p class="text-muted mb-0" *ngIf="patientHistory?.chronicConditions?.length === 0">
                 No chronic conditions
               </p>
             </div>
@@ -169,13 +169,13 @@
               <h6 class="mb-0">Current Medications</h6>
             </div>
             <div class="card-body">
-              <ul class="list-unstyled mb-0" *ngIf="patientHistory.currentMedications.length > 0">
-                <li *ngFor="let medication of patientHistory.currentMedications" class="mb-2">
+              <ul class="list-unstyled mb-0" *ngIf="patientHistory?.currentMedications?.length > 0">
+                <li *ngFor="let medication of patientHistory?.currentMedications" class="mb-2">
                   <i class="bi bi-capsule text-info me-2"></i>
                   {{ medication }}
                 </li>
               </ul>
-              <p class="text-muted mb-0" *ngIf="patientHistory.currentMedications.length === 0">
+              <p class="text-muted mb-0" *ngIf="patientHistory?.currentMedications?.length === 0">
                 No current medications
               </p>
             </div>

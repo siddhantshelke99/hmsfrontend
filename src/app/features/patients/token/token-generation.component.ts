@@ -57,14 +57,8 @@ export class TokenGenerationComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.initializeForm();
     this.loadTodaysTokens();
-    this.subscribeToPatientSelection();
-
-    // Check if patient ID is provided in route
-    const patientId = this.route.snapshot.paramMap.get('patientId');
-    if (patientId) {
-      this.loadPatient(patientId);
-    }
   }
 
   initForm(): void {
@@ -99,6 +93,15 @@ export class TokenGenerationComponent implements OnInit {
     });
   }
 
+  initializeForm(): void {
+    this.tokenForm = this.fb.group({
+      patientId: ['', Validators.required],
+      department: ['', Validators.required],
+      doctorId: ['', Validators.required],
+      doctorName: [''],
+    });
+  }
+
   subscribeToPatientSelection(): void {
     this.patientSearchService.selectedPatient$.subscribe(patient => {
       if (patient) {
@@ -127,20 +130,36 @@ export class TokenGenerationComponent implements OnInit {
   }
 
   loadTodaysTokens(): void {
-
     this.isLoadingQueue = true;
-    
-    this.patientService.getTodaysTokens().subscribe({
-      next: (tokens) => {
+    this.patientService.getTodaysTokens().subscribe(
+      (tokens) => {
         this.todaysTokens = tokens;
-        this.filteredTokens = [...tokens];
         this.isLoadingQueue = false;
-        this.updateDoctorTokenCount();
       },
-      error: () => {
-        this.isLoadingQueue = false;
-      }
-    });
+      () => (this.isLoadingQueue = false)
+    );
+  }
+
+  updateTokenStatus(tokenId: string, status: string): void {
+    // Logic to update token status
+    console.log(`Updating token ${tokenId} to status ${status}`);
+  }
+
+  printToken(token: any): void {
+    const printContent = `
+      <div>
+        <h3>Hospital Name</h3>
+        <p>Token Number: ${token.tokenNumber}</p>
+        <p>Patient Name: ${token.patientName}</p>
+        <p>Status: ${token.status}</p>
+      </div>
+    `;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
   }
 
   updateDoctorTokenCount(): void {
@@ -245,47 +264,6 @@ export class TokenGenerationComponent implements OnInit {
           this.confirmDialog.error('Error', error.message || 'Failed to generate token');
         }
       });
-    }
-  }
-
-  printToken(token: any): void {
-    // Create print window with token details
-    const printContent = `
-      <html>
-        <head>
-          <title>OPD Token - ${token.tokenNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-            .token-box { border: 2px solid #000; padding: 20px; max-width: 400px; margin: 0 auto; }
-            .token-number { font-size: 48px; font-weight: bold; margin: 20px 0; }
-            .details { text-align: left; margin-top: 20px; }
-            .details p { margin: 5px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="token-box">
-            <h2>Government Hospital</h2>
-            <h3>OPD Token</h3>
-            <div class="token-number">${token.tokenNumber}</div>
-            <div class="details">
-              <p><strong>Patient:</strong> ${token.patientName}</p>
-              <p><strong>Doctor:</strong> ${token.doctorName}</p>
-              <p><strong>Department:</strong> ${token.department}</p>
-              <p><strong>Date:</strong> ${new Date(token.tokenDate).toLocaleDateString()}</p>
-              <p><strong>Time:</strong> ${new Date(token.checkInTime).toLocaleTimeString()}</p>
-              <p><strong>Queue Position:</strong> ${token.queuePosition}</p>
-              ${token.priority !== 'NORMAL' ? `<p><strong>Priority:</strong> ${token.priority}</p>` : ''}
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.print();
     }
   }
 
