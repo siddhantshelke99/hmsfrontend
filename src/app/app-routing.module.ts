@@ -14,9 +14,6 @@ import { StockAdjustmentComponent } from './features/inventory/adjustment/stock-
 import { OutsourcedMedicineListComponent } from './features/inventory/outsourced/outsourced-medicine-list.component';
 
 // Patients Components
-import { PatientRegistrationComponent } from './features/patients/registration/patient-registration.component';
-import { TokenGenerationComponent } from './features/patients/token/token-generation.component';
-import { PatientHistoryComponent } from './features/patients/history/patient-history.component';
 
 // Prescriptions Components
 import { PrescriptionCreateComponent } from './features/prescriptions/prescription-create/prescription-create.component';
@@ -108,30 +105,7 @@ export const routes: Routes = [
       },
       
       // Patients Routes
-      {
-        path: 'patients/registration',
-        component: PatientRegistrationComponent
-        // TODO: Add auth guard for ADMIN/RECEPTIONIST roles
-      },
-      {
-        path: 'patients/token/generate',
-        component: TokenGenerationComponent
-      },
    
-      {
-        path: 'patients/token/generate/:patientId',
-        component: TokenGenerationComponent
-        // TODO: Add auth guard for RECEPTIONIST/NURSE roles
-      },
-      {
-        path: 'patients/history',
-        component: PatientHistoryComponent // Create a list component where user selects a patient
-      },
-      {
-        path: 'patients/history/:id',
-        component: PatientHistoryComponent
-        // TODO: Add auth guard for DOCTOR/ADMIN roles
-      },
       
       // Prescriptions Routes
       {
